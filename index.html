@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Melody Matrix - Sign Up</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+<!-- Supabase CDN -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Poppins',sans-serif;
+}
+
+body{
+height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+background:#f7f4ef;
+color:#111;
+overflow:hidden;
+}
+
+/* Floating Music Notes */
+
+.music-notes span{
+position:absolute;
+bottom:-100px;
+font-size:28px;
+animation:float 12s linear infinite;
+opacity:0.7;
+}
+
+/* Pastel Colors */
+
+.music-notes span:nth-child(1){
+left:8%;
+color:#f4a261;
+animation-delay:0s;
+}
+
+.music-notes span:nth-child(2){
+left:20%;
+color:#e76f51;
+animation-delay:2s;
+}
+
+.music-notes span:nth-child(3){
+left:35%;
+color:#2a9d8f;
+animation-delay:4s;
+}
+
+.music-notes span:nth-child(4){
+left:50%;
+color:#6a4c93;
+animation-delay:1s;
+}
+
+.music-notes span:nth-child(5){
+left:65%;
+color:#e9c46a;
+animation-delay:3s;
+}
+
+.music-notes span:nth-child(6){
+left:80%;
+color:#8ecae6;
+animation-delay:5s;
+}
+
+.music-notes span:nth-child(7){
+left:92%;
+color:#ffafcc;
+animation-delay:6s;
+}
+
+/* Animation */
+
+@keyframes float{
+
+0%{
+transform:translateY(0) rotate(0deg);
+opacity:0;
+}
+
+50%{
+opacity:0.8;
+}
+
+100%{
+transform:translateY(-110vh) rotate(360deg);
+opacity:0;
+}
+
+}
+
+/* Signup Card */
+
+.container{
+width:380px;
+background:white;
+padding:40px;
+border-radius:14px;
+box-shadow:0 10px 35px rgba(0,0,0,0.08);
+text-align:center;
+z-index:2;
+}
+
+.logo{
+font-size:26px;
+font-weight:600;
+margin-bottom:5px;
+}
+
+.subtitle{
+font-size:14px;
+color:#555;
+margin-bottom:30px;
+}
+
+/* Inputs */
+
+.input-group{
+margin-bottom:18px;
+text-align:left;
+}
+
+.input-group label{
+font-size:13px;
+margin-bottom:6px;
+display:block;
+}
+
+.input-group input{
+width:100%;
+padding:10px;
+border:1px solid #ddd;
+border-radius:8px;
+outline:none;
+}
+
+.input-group input:focus{
+border-color:#444;
+}
+
+/* Button */
+
+button{
+width:100%;
+padding:12px;
+border:none;
+border-radius:8px;
+background:#111;
+color:white;
+font-weight:500;
+cursor:pointer;
+transition:0.25s;
+}
+
+button:hover{
+background:#333;
+}
+
+/* Login */
+
+.login{
+margin-top:15px;
+font-size:13px;
+}
+
+.login a{
+color:black;
+font-weight:500;
+text-decoration:none;
+}
+
+.error-message{
+color:#e76f51;
+font-size:12px;
+margin-top:10px;
+display:none;
+}
+
+.success-message{
+color:#2a9d8f;
+font-size:12px;
+margin-top:10px;
+display:none;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<!-- Floating Notes -->
+
+<div class="music-notes">
+<span>♪</span>
+<span>♫</span>
+<span>♩</span>
+<span>♪</span>
+<span>♫</span>
+<span>♩</span>
+<span>♬</span>
+</div>
+
+<!-- Signup Card -->
+
+<div class="container">
+
+<div class="logo">Melody Matrix</div>
+<div class="subtitle">AI Music Generator</div>
+
+<form id="signupForm">
+
+<div class="input-group">
+<label>Full Name</label>
+<input type="text" id="fullName" placeholder="Enter your name" required>
+</div>
+
+<div class="input-group">
+<label>Email</label>
+<input type="email" id="email" placeholder="Enter your email" required>
+</div>
+
+<div class="input-group">
+<label>Password</label>
+<input type="password" id="password" placeholder="Create password" required>
+</div>
+
+<div class="input-group">
+<label>Confirm Password</label>
+<input type="password" id="confirmPassword" placeholder="Confirm password" required>
+</div>
+
+<div class="error-message" id="errorMessage"></div>
+<div class="success-message" id="successMessage"></div>
+
+<button type="submit">Create Account</button>
+
+</form>
+
+<div class="login">
+Already have an account? <a href="login.html">Login</a>
+</div>
+
+</div>
+
+<script>
+// Initialize Supabase
+// Replace these with your actual Supabase project URL and anon key
+const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Signup form handler
+document.getElementById('signupForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const fullName = document.getElementById('fullName').value;
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+    const errorMessage = document.getElementById('errorMessage');
+    const successMessage = document.getElementById('successMessage');
+    
+    // Hide previous messages
+    errorMessage.style.display = 'none';
+    successMessage.style.display = 'none';
+    
+    // Validate passwords match
+    if (password !== confirmPassword) {
+        errorMessage.textContent = 'Passwords do not match!';
+        errorMessage.style.display = 'block';
+        return;
+    }
+    
+    // Validate password length
+    if (password.length < 6) {
+        errorMessage.textContent = 'Password must be at least 6 characters long!';
+        errorMessage.style.display = 'block';
+        return;
+    }
+    
+    try {
+        const { data, error } = await supabase.auth.signUp({
+            email: email,
+            password: password,
+            options: {
+                data: {
+                    full_name: fullName
+                }
+            }
+        });
+        
+        if (error) throw error;
+        
+        // Success - show success message
+        successMessage.textContent = 'Account created successfully! Please check your email to verify your account.';
+        successMessage.style.display = 'block';
+        
+        // Store user session if available
+        if (data.user) {
+            localStorage.setItem('user', JSON.stringify(data.user));
+            if (data.session) {
+                localStorage.setItem('session', JSON.stringify(data.session));
+            }
+        }
+        
+        // Redirect to login page after a delay
+        setTimeout(() => {
+            window.location.href = 'login.html';
+        }, 3000);
+        
+    } catch (error) {
+        errorMessage.textContent = error.message || 'Sign up failed. Please try again.';
+        errorMessage.style.display = 'block';
+    }
+});
+
+// Check if user is already logged in
+window.addEventListener('DOMContentLoaded', () => {
+    const user = localStorage.getItem('user');
+    if (user) {
+        // User is already logged in, redirect to dashboard
+        window.location.href = 'dashboard.html'; // Change this to your main app page
+    }
+});
+</script>
+
+</body>
+</html>
