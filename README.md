@@ -11,6 +11,7 @@ Melody Matrix is a modern web application that allows users to generate music us
 ### Current Features
 - **Login Page** (`login.html`)
   - Email and password authentication
+  - Google OAuth login option
   - Guest login option
   - Beautiful animated UI with floating music notes
   - Form validation and error handling
@@ -18,7 +19,8 @@ Melody Matrix is a modern web application that allows users to generate music us
 
 - **Signup Page** (`index.html`)
   - User registration with full name, email, and password
-  - Password confirmation validation
+  - Password confirmation validation (checks if passwords match)
+  - Google OAuth signup option
   - Email verification support
   - Link to login page for existing users
 
@@ -28,6 +30,10 @@ Melody Matrix is a modern web application that allows users to generate music us
 - Responsive design
 - Smooth transitions and hover effects
 - Poppins font family for a modern look
+
+## 🔐 Security Note
+
+**IMPORTANT**: This repository uses a secure configuration system. Sensitive credentials are stored in `config.js`, which is excluded from version control via `.gitignore`. Before using the application, you must create `config.js` with your own Supabase credentials. Never commit real API keys or secrets to version control.
 
 ## 🚀 Getting Started
 
@@ -63,27 +69,59 @@ cd "Melody Matrix"
 
 #### 3. Configure Authentication
 
-1. **Update `login.html`**
-   - Open `login.html` in a text editor
-   - Find lines 265-266:
-   ```javascript
-   const SUPABASE_URL = 'YOUR_SUPABASE_URL';
-   const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
-   ```
-   - Replace `YOUR_SUPABASE_URL` with your actual Supabase Project URL
-   - Replace `YOUR_SUPABASE_ANON_KEY` with your actual Supabase anon key
+**Create `config.js` file:**
 
-2. **Update `index.html`**
-   - Open `index.html` in a text editor
-   - Find lines 264-265:
-   ```javascript
-   const SUPABASE_URL = 'YOUR_SUPABASE_URL';
-   const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+1. Copy the example configuration file:
+   ```bash
+   cp config.example.js config.js
    ```
-   - Replace `YOUR_SUPABASE_URL` with your actual Supabase Project URL
-   - Replace `YOUR_SUPABASE_ANON_KEY` with your actual Supabase anon key
+   Or manually create a new file named `config.js`
 
-#### 4. Configure Supabase Authentication Settings
+2. Open `config.js` and fill in your Supabase credentials:
+   ```javascript
+   const CONFIG = {
+       SUPABASE_URL: 'https://your-project-id.supabase.co',
+       SUPABASE_ANON_KEY: 'your-actual-anon-key-here'
+   };
+   ```
+
+3. Replace the placeholder values:
+   - `SUPABASE_URL`: Your Supabase Project URL (from Settings → API → Project URL)
+   - `SUPABASE_ANON_KEY`: Your Supabase anon/public key (from Settings → API → Project API keys → anon public)
+
+4. **Important**: 
+   - `config.js` is already in `.gitignore` and will NOT be committed to Git
+   - `config.example.js` is safe to commit (it's just a template)
+   - Never share your `config.js` file or commit it to version control
+
+#### 4. Configure Google OAuth (Optional but Recommended)
+
+To enable Google sign-in and sign-up:
+
+1. **Set Up Google Cloud Console**
+   - Go to [Google Cloud Console](https://console.cloud.google.com/)
+   - Create a new project or select an existing one
+   - Go to **APIs & Services** → **Credentials**
+   - Click **Create Credentials** → **OAuth client ID**
+   - Configure OAuth consent screen (if prompted)
+   - Application type: **Web application**
+   - Add authorized JavaScript origins: `http://localhost:8000` (or your port)
+   - Add authorized redirect URI: `https://YOUR_SUPABASE_PROJECT_ID.supabase.co/auth/v1/callback`
+   - Copy the **Client ID** and **Client secret**
+
+2. **Configure Google Provider in Supabase**
+   - In Supabase dashboard → **Authentication** → **Providers**
+   - Find **Google** and click it
+   - Enable Google: Toggle **ON**
+   - Paste your **Client ID** and **Client secret** from Google Cloud Console
+   - Click **Save**
+
+3. **Configure Redirect URLs in Supabase**
+   - Go to **Authentication** → **URL Configuration**
+   - **Site URL**: `http://localhost:8000` (or your development port)
+   - **Redirect URLs**: Add `http://localhost:8000/**` (or specific paths like `http://localhost:8000/dashboard.html`)
+
+#### 5. Configure Supabase Authentication Settings
 
 1. **Enable Email Authentication**
    - In Supabase dashboard, go to **Authentication** → **Providers**
@@ -101,7 +139,7 @@ cd "Melody Matrix"
    - Customize confirmation and password reset emails
    - Or use Supabase's default templates
 
-#### 5. Run the Application
+#### 6. Run the Application
 
 Simply open `login.html` in your web browser:
 - Double-click `login.html`, or
@@ -124,30 +162,48 @@ Melody Matrix/
 │
 ├── index.html          # Signup page
 ├── login.html          # Login page (entry point)
-└── README.md          # This file
+├── config.example.js   # Configuration template (safe to commit)
+├── config.js           # Your actual config (NOT committed - in .gitignore)
+├── .gitignore          # Git ignore rules
+└── README.md           # This file
 ```
 
 ## 🔐 Authentication Flow
 
-1. **New Users**
+1. **New Users (Email/Password)**
    - Start at `login.html`
    - Click "Sign Up" link → Redirects to `index.html`
-   - Fill in registration form
+   - Fill in registration form (name, email, password, confirm password)
+   - Password validation: Checks if passwords match and meet minimum length (6 characters)
    - Account created in Supabase
    - Email verification sent (if enabled)
-   - Redirected back to login page
+   - Redirected back to login page (user must log in separately)
 
-2. **Existing Users**
+2. **New Users (Google OAuth)**
+   - Start at `index.html` (signup page)
+   - Click "Sign up with Google" button
+   - Redirected to Google OAuth consent screen
+   - After approval, account created and user logged in
+   - Redirected to dashboard (when implemented)
+
+3. **Existing Users (Email/Password)**
    - Start at `login.html`
    - Enter email and password
    - Authenticated via Supabase
    - Session stored in localStorage
    - Redirected to dashboard (when implemented)
 
-3. **Guest Users**
+4. **Existing Users (Google OAuth)**
+   - Start at `login.html`
+   - Click "Continue with Google" button
+   - Redirected to Google OAuth consent screen
+   - After approval, authenticated and logged in
+   - Redirected to dashboard (when implemented)
+
+5. **Guest Users**
    - Start at `login.html`
    - Click "Login as Guest" button
-   - Creates anonymous session (if enabled) or local guest session
+   - Creates anonymous session (if enabled in Supabase) or local guest session
    - Guest status stored in localStorage
    - Redirected to dashboard (when implemented)
 
@@ -158,11 +214,19 @@ Melody Matrix/
 
 ## 🔧 Configuration Notes
 
+### Configuration System
+- **External Config**: All Supabase credentials are stored in `config.js` (not committed to Git)
+- **Template File**: `config.example.js` shows the required configuration structure
+- **Security**: `config.js` is in `.gitignore` to prevent accidental commits of sensitive data
+
 ### Supabase Configuration
 - **Email Authentication**: Enabled by default
+- **Google OAuth**: Optional but recommended (requires Google Cloud Console setup)
 - **Anonymous Authentication**: Optional (for guest login)
 - **Email Verification**: Can be enabled/disabled in Supabase settings
-- **Password Requirements**: Minimum 6 characters (enforced in code)
+- **Password Requirements**: 
+  - Minimum 6 characters (enforced in code)
+  - Password and confirm password must match (validated on signup)
 
 ### Local Storage
 The application uses browser localStorage to store:
@@ -176,23 +240,36 @@ The application uses browser localStorage to store:
 - [ ] Music generation functionality
 - [ ] User profile management
 - [ ] Password reset functionality
-- [ ] Social login options
 - [ ] Session management improvements
 
 ## 📝 Notes
 
-- **Supabase URLs**: Currently using placeholder values. Must be configured before use.
+- **Configuration**: Must create `config.js` from `config.example.js` before use
 - **Redirect URLs**: Currently redirects to `dashboard.html` (not yet implemented)
 - **Guest Login**: Falls back to local storage if anonymous auth is not enabled in Supabase
 - **Email Verification**: Users may need to verify their email before logging in (depending on Supabase settings)
+- **Password Validation**: Signup form validates password match and minimum length before submission
+- **Google OAuth**: Requires both Google Cloud Console and Supabase configuration
 
 ## 🐛 Troubleshooting
 
 ### Authentication Not Working
-- Verify Supabase URL and anon key are correctly set
+- **Missing Configuration**: Ensure `config.js` exists and contains valid Supabase credentials
+- **Config Error**: Check browser console for "Configuration not found" errors
+- Verify Supabase URL and anon key are correctly set in `config.js`
 - Check browser console for errors
 - Ensure Supabase project is active
 - Verify email provider is enabled in Supabase dashboard
+
+### Configuration Issues
+- **"Configuration missing" alert**: Create `config.js` by copying `config.example.js`
+- **Config not loading**: Ensure `config.js` is in the same directory as `index.html` and `login.html`
+- **Invalid credentials**: Verify your Supabase URL and anon key in Supabase Dashboard → Settings → API
+
+### Google OAuth Issues
+- **"redirect_uri_mismatch"**: Ensure Supabase callback URL is added in Google Cloud Console → Authorized redirect URIs
+- **"access_denied"**: Check OAuth consent screen is published or you're added as a test user
+- **"invalid_client"**: Verify Client ID and Client secret are correct in Supabase → Authentication → Providers → Google
 
 ### Guest Login Issues
 - Enable anonymous authentication in Supabase if you want true anonymous sessions
