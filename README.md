@@ -203,14 +203,5 @@ The application uses browser localStorage to store:
 - Verify email templates are configured in Supabase
 - Check Supabase logs for email sending errors
 
-## 📄 License
-
-[Add your license here]
-
-## 👤 Author
-
-[Add your name/contact information here]
-
----
 
 **Note**: This project is currently in development. The authentication pages are functional, but the main application (dashboard and music generation) is yet to be implemented.
