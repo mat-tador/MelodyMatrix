@@ -11,6 +11,9 @@
 <!-- Supabase CDN -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+<!-- Configuration - Load config.js with your actual Supabase credentials -->
+<script src="config.js"></script>
+
 <style>
 
 *{
@@ -207,6 +210,45 @@ margin-top:10px;
 display:none;
 }
 
+/* Social auth separator */
+.separator{
+margin:15px 0;
+display:flex;
+align-items:center;
+text-align:center;
+font-size:12px;
+color:#777;
+}
+
+.separator::before,
+.separator::after{
+content:"";
+flex:1;
+border-bottom:1px solid #ddd;
+}
+
+.separator span{
+margin:0 10px;
+}
+
+button.google-btn{
+background:#ffffff;
+color:#111;
+border:1px solid #ddd;
+display:flex;
+align-items:center;
+justify-content:center;
+gap:8px;
+}
+
+button.google-btn:hover{
+background:#f3f3f3;
+}
+
+.google-icon{
+font-size:16px;
+}
+
 </style>
 
 </head>
@@ -244,6 +286,13 @@ display:none;
 <input type="password" id="password" placeholder="Enter your password" required>
 </div>
 
+<div class="separator"><span>or</span></div>
+
+<button type="button" class="google-btn" id="googleLoginBtn">
+<span class="google-icon">G</span>
+<span>Continue with Google</span>
+</button>
+
 <div class="error-message" id="errorMessage"></div>
 <div class="success-message" id="successMessage"></div>
 
@@ -260,15 +309,53 @@ Don't have an account? <a href="index.html">Sign Up</a>
 </div>
 
 <script>
-// Initialize Supabase
-// Replace these with your actual Supabase project URL and anon key
-const SUPABASE_URL = 'YOUR_SUPABASE_URL';
-const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+// Wait for everything to load
+window.addEventListener('load', function() {
+    // Check if config.js is loaded
+    if (typeof CONFIG === 'undefined' || !CONFIG.SUPABASE_URL || !CONFIG.SUPABASE_ANON_KEY) {
+        console.error('Configuration not found! Please create config.js with your Supabase credentials.');
+        console.error('Copy config.example.js to config.js and fill in your actual values.');
+        alert('Configuration missing! Please create config.js with your Supabase credentials.\n\nSee config.example.js for reference.');
+        return;
+    }
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // Check if supabase is available (from CDN)
+    if (typeof supabase === 'undefined') {
+        console.error('Supabase library not loaded. Please check the CDN script.');
+        return;
+    }
 
-// Login form handler
-document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    // Initialize Supabase with config from config.js
+    const supabaseClient = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+
+    // Google login handler
+    document.getElementById('googleLoginBtn').addEventListener('click', async () => {
+    const errorMessage = document.getElementById('errorMessage');
+    const successMessage = document.getElementById('successMessage');
+
+    errorMessage.style.display = 'none';
+    successMessage.style.display = 'none';
+
+        try {
+            const { error } = await supabaseClient.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: window.location.origin + '/dashboard.html' // Update if your redirect is different
+                }
+            });
+
+            if (error) throw error;
+
+            successMessage.textContent = 'Redirecting to Google...';
+            successMessage.style.display = 'block';
+        } catch (error) {
+            errorMessage.textContent = error.message || 'Google login failed. Please try again.';
+            errorMessage.style.display = 'block';
+        }
+    });
+
+    // Login form handler
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     
     const email = document.getElementById('email').value;
@@ -280,35 +367,35 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     errorMessage.style.display = 'none';
     successMessage.style.display = 'none';
     
-    try {
-        const { data, error } = await supabase.auth.signInWithPassword({
-            email: email,
-            password: password
-        });
-        
-        if (error) throw error;
-        
-        // Success - redirect or show success message
-        successMessage.textContent = 'Login successful! Redirecting...';
-        successMessage.style.display = 'block';
-        
-        // Store user session
-        localStorage.setItem('user', JSON.stringify(data.user));
-        localStorage.setItem('session', JSON.stringify(data.session));
-        
-        // Redirect to main app or dashboard
-        setTimeout(() => {
-            window.location.href = 'dashboard.html'; // Change this to your main app page
-        }, 1000);
-        
-    } catch (error) {
-        errorMessage.textContent = error.message || 'Login failed. Please check your credentials.';
-        errorMessage.style.display = 'block';
-    }
-});
+        try {
+            const { data, error } = await supabaseClient.auth.signInWithPassword({
+                email: email,
+                password: password
+            });
+            
+            if (error) throw error;
+            
+            // Success - redirect or show success message
+            successMessage.textContent = 'Login successful! Redirecting...';
+            successMessage.style.display = 'block';
+            
+            // Store user session
+            localStorage.setItem('user', JSON.stringify(data.user));
+            localStorage.setItem('session', JSON.stringify(data.session));
+            
+            // Redirect to main app or dashboard
+            setTimeout(() => {
+                window.location.href = 'dashboard.html'; // Change this to your main app page
+            }, 1000);
+            
+        } catch (error) {
+            errorMessage.textContent = error.message || 'Login failed. Please check your credentials.';
+            errorMessage.style.display = 'block';
+        }
+    });
 
-// Guest login handler
-document.getElementById('guestBtn').addEventListener('click', async () => {
+    // Guest login handler
+    document.getElementById('guestBtn').addEventListener('click', async () => {
     const errorMessage = document.getElementById('errorMessage');
     const successMessage = document.getElementById('successMessage');
     
@@ -316,13 +403,45 @@ document.getElementById('guestBtn').addEventListener('click', async () => {
     errorMessage.style.display = 'none';
     successMessage.style.display = 'none';
     
-    try {
-        // Create anonymous session or use a guest account
-        // Option 1: Sign in anonymously (if enabled in Supabase)
-        const { data, error } = await supabase.auth.signInAnonymously();
+        try {
+            // Create anonymous session or use a guest account
+            // Option 1: Sign in anonymously (if enabled in Supabase)
+            const { data, error } = await supabaseClient.auth.signInAnonymously();
         
-        if (error) {
-            // If anonymous auth is not enabled, create a guest session locally
+            if (error) {
+                // If anonymous auth is not enabled, create a guest session locally
+                const guestUser = {
+                    id: 'guest_' + Date.now(),
+                    email: 'guest@melodymatrix.com',
+                    isGuest: true
+                };
+                
+                localStorage.setItem('user', JSON.stringify(guestUser));
+                localStorage.setItem('isGuest', 'true');
+                
+                successMessage.textContent = 'Logged in as guest! Redirecting...';
+                successMessage.style.display = 'block';
+                
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html'; // Change this to your main app page
+                }, 1000);
+                return;
+            }
+            
+            // Success with anonymous auth
+            successMessage.textContent = 'Logged in as guest! Redirecting...';
+            successMessage.style.display = 'block';
+            
+            localStorage.setItem('user', JSON.stringify(data.user));
+            localStorage.setItem('session', JSON.stringify(data.session));
+            localStorage.setItem('isGuest', 'true');
+            
+            setTimeout(() => {
+                window.location.href = 'dashboard.html'; // Change this to your main app page
+            }, 1000);
+            
+        } catch (error) {
+            // Fallback: create local guest session
             const guestUser = {
                 id: 'guest_' + Date.now(),
                 email: 'guest@melodymatrix.com',
@@ -338,48 +457,8 @@ document.getElementById('guestBtn').addEventListener('click', async () => {
             setTimeout(() => {
                 window.location.href = 'dashboard.html'; // Change this to your main app page
             }, 1000);
-            return;
         }
-        
-        // Success with anonymous auth
-        successMessage.textContent = 'Logged in as guest! Redirecting...';
-        successMessage.style.display = 'block';
-        
-        localStorage.setItem('user', JSON.stringify(data.user));
-        localStorage.setItem('session', JSON.stringify(data.session));
-        localStorage.setItem('isGuest', 'true');
-        
-        setTimeout(() => {
-            window.location.href = 'dashboard.html'; // Change this to your main app page
-        }, 1000);
-        
-    } catch (error) {
-        // Fallback: create local guest session
-        const guestUser = {
-            id: 'guest_' + Date.now(),
-            email: 'guest@melodymatrix.com',
-            isGuest: true
-        };
-        
-        localStorage.setItem('user', JSON.stringify(guestUser));
-        localStorage.setItem('isGuest', 'true');
-        
-        successMessage.textContent = 'Logged in as guest! Redirecting...';
-        successMessage.style.display = 'block';
-        
-        setTimeout(() => {
-            window.location.href = 'dashboard.html'; // Change this to your main app page
-        }, 1000);
-    }
-});
-
-// Check if user is already logged in
-window.addEventListener('DOMContentLoaded', () => {
-    const user = localStorage.getItem('user');
-    if (user) {
-        // User is already logged in, redirect to dashboard
-        window.location.href = 'dashboard.html'; // Change this to your main app page
-    }
+    });
 });
 </script>
 
