@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Melody Matrix - Login</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+<!-- Supabase CDN -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Poppins',sans-serif;
+}
+
+body{
+height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+background:#f7f4ef;
+color:#111;
+overflow:hidden;
+}
+
+/* Floating Music Notes */
+
+.music-notes span{
+position:absolute;
+bottom:-100px;
+font-size:28px;
+animation:float 12s linear infinite;
+opacity:0.7;
+}
+
+/* Pastel Colors */
+
+.music-notes span:nth-child(1){
+left:8%;
+color:#f4a261;
+animation-delay:0s;
+}
+
+.music-notes span:nth-child(2){
+left:20%;
+color:#e76f51;
+animation-delay:2s;
+}
+
+.music-notes span:nth-child(3){
+left:35%;
+color:#2a9d8f;
+animation-delay:4s;
+}
+
+.music-notes span:nth-child(4){
+left:50%;
+color:#6a4c93;
+animation-delay:1s;
+}
+
+.music-notes span:nth-child(5){
+left:65%;
+color:#e9c46a;
+animation-delay:3s;
+}
+
+.music-notes span:nth-child(6){
+left:80%;
+color:#8ecae6;
+animation-delay:5s;
+}
+
+.music-notes span:nth-child(7){
+left:92%;
+color:#ffafcc;
+animation-delay:6s;
+}
+
+/* Animation */
+
+@keyframes float{
+
+0%{
+transform:translateY(0) rotate(0deg);
+opacity:0;
+}
+
+50%{
+opacity:0.8;
+}
+
+100%{
+transform:translateY(-110vh) rotate(360deg);
+opacity:0;
+}
+
+}
+
+/* Login Card */
+
+.container{
+width:380px;
+background:white;
+padding:40px;
+border-radius:14px;
+box-shadow:0 10px 35px rgba(0,0,0,0.08);
+text-align:center;
+z-index:2;
+}
+
+.logo{
+font-size:26px;
+font-weight:600;
+margin-bottom:5px;
+}
+
+.subtitle{
+font-size:14px;
+color:#555;
+margin-bottom:30px;
+}
+
+/* Inputs */
+
+.input-group{
+margin-bottom:18px;
+text-align:left;
+}
+
+.input-group label{
+font-size:13px;
+margin-bottom:6px;
+display:block;
+}
+
+.input-group input{
+width:100%;
+padding:10px;
+border:1px solid #ddd;
+border-radius:8px;
+outline:none;
+}
+
+.input-group input:focus{
+border-color:#444;
+}
+
+/* Button */
+
+button{
+width:100%;
+padding:12px;
+border:none;
+border-radius:8px;
+background:#111;
+color:white;
+font-weight:500;
+cursor:pointer;
+transition:0.25s;
+margin-bottom:10px;
+}
+
+button:hover{
+background:#333;
+}
+
+button.guest-btn{
+background:#6a4c93;
+}
+
+button.guest-btn:hover{
+background:#5a3c83;
+}
+
+/* Signup */
+
+.signup{
+margin-top:15px;
+font-size:13px;
+}
+
+.signup a{
+color:black;
+font-weight:500;
+text-decoration:none;
+}
+
+.error-message{
+color:#e76f51;
+font-size:12px;
+margin-top:10px;
+display:none;
+}
+
+.success-message{
+color:#2a9d8f;
+font-size:12px;
+margin-top:10px;
+display:none;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<!-- Floating Notes -->
+
+<div class="music-notes">
+<span>♪</span>
+<span>♫</span>
+<span>♩</span>
+<span>♪</span>
+<span>♫</span>
+<span>♩</span>
+<span>♬</span>
+</div>
+
+<!-- Login Card -->
+
+<div class="container">
+
+<div class="logo">Melody Matrix</div>
+<div class="subtitle">AI Music Generator</div>
+
+<form id="loginForm">
+
+<div class="input-group">
+<label>Email</label>
+<input type="email" id="email" placeholder="Enter your email" required>
+</div>
+
+<div class="input-group">
+<label>Password</label>
+<input type="password" id="password" placeholder="Enter your password" required>
+</div>
+
+<div class="error-message" id="errorMessage"></div>
+<div class="success-message" id="successMessage"></div>
+
+<button type="submit">Login</button>
+
+<button type="button" class="guest-btn" id="guestBtn">Login as Guest</button>
+
+</form>
+
+<div class="signup">
+Don't have an account? <a href="index.html">Sign Up</a>
+</div>
+
+</div>
+
+<script>
+// Initialize Supabase
+// Replace these with your actual Supabase project URL and anon key
+const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Login form handler
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    const errorMessage = document.getElementById('errorMessage');
+    const successMessage = document.getElementById('successMessage');
+    
+    // Hide previous messages
+    errorMessage.style.display = 'none';
+    successMessage.style.display = 'none';
+    
+    try {
+        const { data, error } = await supabase.auth.signInWithPassword({
+            email: email,
+            password: password
+        });
+        
+        if (error) throw error;
+        
+        // Success - redirect or show success message
+        successMessage.textContent = 'Login successful! Redirecting...';
+        successMessage.style.display = 'block';
+        
+        // Store user session
+        localStorage.setItem('user', JSON.stringify(data.user));
+        localStorage.setItem('session', JSON.stringify(data.session));
+        
+        // Redirect to main app or dashboard
+        setTimeout(() => {
+            window.location.href = 'dashboard.html'; // Change this to your main app page
+        }, 1000);
+        
+    } catch (error) {
+        errorMessage.textContent = error.message || 'Login failed. Please check your credentials.';
+        errorMessage.style.display = 'block';
+    }
+});
+
+// Guest login handler
+document.getElementById('guestBtn').addEventListener('click', async () => {
+    const errorMessage = document.getElementById('errorMessage');
+    const successMessage = document.getElementById('successMessage');
+    
+    // Hide previous messages
+    errorMessage.style.display = 'none';
+    successMessage.style.display = 'none';
+    
+    try {
+        // Create anonymous session or use a guest account
+        // Option 1: Sign in anonymously (if enabled in Supabase)
+        const { data, error } = await supabase.auth.signInAnonymously();
+        
+        if (error) {
+            // If anonymous auth is not enabled, create a guest session locally
+            const guestUser = {
+                id: 'guest_' + Date.now(),
+                email: 'guest@melodymatrix.com',
+                isGuest: true
+            };
+            
+            localStorage.setItem('user', JSON.stringify(guestUser));
+            localStorage.setItem('isGuest', 'true');
+            
+            successMessage.textContent = 'Logged in as guest! Redirecting...';
+            successMessage.style.display = 'block';
+            
+            setTimeout(() => {
+                window.location.href = 'dashboard.html'; // Change this to your main app page
+            }, 1000);
+            return;
+        }
+        
+        // Success with anonymous auth
+        successMessage.textContent = 'Logged in as guest! Redirecting...';
+        successMessage.style.display = 'block';
+        
+        localStorage.setItem('user', JSON.stringify(data.user));
+        localStorage.setItem('session', JSON.stringify(data.session));
+        localStorage.setItem('isGuest', 'true');
+        
+        setTimeout(() => {
+            window.location.href = 'dashboard.html'; // Change this to your main app page
+        }, 1000);
+        
+    } catch (error) {
+        // Fallback: create local guest session
+        const guestUser = {
+            id: 'guest_' + Date.now(),
+            email: 'guest@melodymatrix.com',
+            isGuest: true
+        };
+        
+        localStorage.setItem('user', JSON.stringify(guestUser));
+        localStorage.setItem('isGuest', 'true');
+        
+        successMessage.textContent = 'Logged in as guest! Redirecting...';
+        successMessage.style.display = 'block';
+        
+        setTimeout(() => {
+            window.location.href = 'dashboard.html'; // Change this to your main app page
+        }, 1000);
+    }
+});
+
+// Check if user is already logged in
+window.addEventListener('DOMContentLoaded', () => {
+    const user = localStorage.getItem('user');
+    if (user) {
+        // User is already logged in, redirect to dashboard
+        window.location.href = 'dashboard.html'; // Change this to your main app page
+    }
+});
+</script>
+
+</body>
+</html>
