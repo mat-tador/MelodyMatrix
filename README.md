@@ -1,7 +1,7 @@
 CSCI 5300 Software Engineering Project
 # Melody Matrix 🎵
 
-**AI Music Generator** - A web application for generating music using artificial intelligence.
+**Music Generator** - A web application for generating music.
 
 ## 📋 Overview
 
