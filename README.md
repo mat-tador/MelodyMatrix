@@ -237,7 +237,6 @@ The application uses browser localStorage to store:
 
 ## 🚧 Future Development
 
-- [ ] Dashboard/main application page
 - [ ] Music generation functionality
 - [ ] User profile management
 - [ ] Password reset functionality
