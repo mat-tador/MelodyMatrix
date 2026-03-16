@@ -120,7 +120,10 @@ To enable Google sign-in and sign-up:
 3. **Configure Redirect URLs in Supabase**
    - Go to **Authentication** → **URL Configuration**
    - **Site URL**: `http://localhost:8000` (or your development port)
-   - **Redirect URLs**: Add `http://localhost:8000/**` (or specific paths like `http://localhost:8000/dashboard.html`)
+   - **Redirect URLs**: add the **exact pages** that Supabase redirects back to, for example:
+     - `http://localhost:8000/index.html`
+     - `http://localhost:8000/login.html`
+     - `http://localhost:8000/dashboard.html`
 
 #### 5. Configure Supabase Authentication Settings
 
@@ -142,19 +145,20 @@ To enable Google sign-in and sign-up:
 
 #### 6. Run the Application
 
-Simply open `login.html` in your web browser:
-- Double-click `login.html`, or
-- Right-click → Open with → Your preferred browser
-- Or use a local server:
-  ```bash
-  # Using Python
-  python -m http.server 8000
-  
-  # Using Node.js (if you have http-server installed)
-  npx http-server
-  
-  # Then navigate to http://localhost:8000/login.html
-  ```
+Always run the app through a local web server (OAuth will not work from `file:///` URLs):
+
+```bash
+# From the folder containing index.html, login.html, dashboard.html
+python -m http.server 8000
+
+# Or, with Node.js (if you have http-server installed)
+npx http-server -p 8000
+```
+
+Then open these URLs in your browser:
+- `http://localhost:8000/index.html`      (signup page)
+- `http://localhost:8000/login.html`      (login page)
+- `http://localhost:8000/dashboard.html`  (dashboard, when implemented)
 
 ## 📁 Project Structure
 
@@ -181,10 +185,10 @@ Melody Matrix/
    - Redirected back to login page (user must log in separately)
 
 2. **New Users (Google OAuth)**
-   - Start at `index.html` (signup page)
-   - Click "Sign up with Google" button
+   - Start at `index.html` (signup page), or click **Continue with Google** on `login.html` which redirects to `index.html`
+   - On `index.html`, click "Sign up with Google" button
    - Redirected to Google OAuth consent screen
-   - After approval, account created and user logged in
+   - After approval, account created (or an existing Google user reused) and user logged in
    - Redirected to dashboard (when implemented)
 
 3. **Existing Users (Email/Password)**
@@ -196,9 +200,11 @@ Melody Matrix/
 
 4. **Existing Users (Google OAuth)**
    - Start at `login.html`
-   - Click "Continue with Google" button
-   - Redirected to Google OAuth consent screen
-   - After approval, authenticated and logged in
+   - Click "Continue with Google" button → redirected to `index.html`
+   - On `index.html`, click "Sign up with Google" (used for both first‑time and returning Google users)
+   - Supabase checks if the Google account already exists:
+     - If it exists: user is authenticated and logged in
+     - If it does not exist: a new account is created and logged in
    - Redirected to dashboard (when implemented)
 
 5. **Guest Users**
