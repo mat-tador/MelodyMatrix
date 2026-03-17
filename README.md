@@ -241,7 +241,9 @@ The application uses browser localStorage to store:
 - Guest status flag
 - Authentication tokens
 
-## 🚧 Future Development
+## 🚧 Future Developmentt must be resolved
+
+Use the command line to resolve confli
 
 - [ ] Music generation functionality
 - [ ] User profile management
@@ -288,3 +290,4 @@ The application uses browser localStorage to store:
 
 
 **Note**: This project is currently in development. The authentication pages are functional, but the main application (dashboard and music generation) is yet to be implemented.
+main
