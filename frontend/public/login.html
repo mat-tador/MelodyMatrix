@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Melody Matrix - Login</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+
+<style>
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:'Poppins',sans-serif;
+}
+
+body{
+  height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:#f7f4ef;
+  color:#111;
+  overflow:hidden;
+}
+
+.music-notes span{
+  position:absolute;
+  bottom:-100px;
+  font-size:28px;
+  animation:float 12s linear infinite;
+  opacity:0.7;
+}
+
+.music-notes span:nth-child(1){ left:8%; color:#f4a261; animation-delay:0s; }
+.music-notes span:nth-child(2){ left:20%; color:#e76f51; animation-delay:2s; }
+.music-notes span:nth-child(3){ left:35%; color:#2a9d8f; animation-delay:4s; }
+.music-notes span:nth-child(4){ left:50%; color:#6a4c93; animation-delay:1s; }
+.music-notes span:nth-child(5){ left:65%; color:#e9c46a; animation-delay:3s; }
+.music-notes span:nth-child(6){ left:80%; color:#8ecae6; animation-delay:5s; }
+.music-notes span:nth-child(7){ left:92%; color:#ffafcc; animation-delay:6s; }
+
+@keyframes float{
+  0%{
+    transform:translateY(0) rotate(0deg);
+    opacity:0;
+  }
+  50%{
+    opacity:0.8;
+  }
+  100%{
+    transform:translateY(-110vh) rotate(360deg);
+    opacity:0;
+  }
+}
+
+.container{
+  width:380px;
+  background:white;
+  padding:40px;
+  border-radius:14px;
+  box-shadow:0 10px 35px rgba(0,0,0,0.08);
+  text-align:center;
+  z-index:2;
+}
+
+.logo{
+  font-size:26px;
+  font-weight:600;
+  margin-bottom:5px;
+}
+
+.subtitle{
+  font-size:14px;
+  color:#555;
+  margin-bottom:30px;
+}
+
+.input-group{
+  margin-bottom:18px;
+  text-align:left;
+}
+
+.input-group label{
+  font-size:13px;
+  margin-bottom:6px;
+  display:block;
+}
+
+.input-group input{
+  width:100%;
+  padding:10px;
+  border:1px solid #ddd;
+  border-radius:8px;
+  outline:none;
+}
+
+.input-group input:focus{
+  border-color:#444;
+}
+
+button{
+  width:100%;
+  padding:12px;
+  border:none;
+  border-radius:8px;
+  background:#111;
+  color:white;
+  font-weight:500;
+  cursor:pointer;
+  transition:0.25s;
+  margin-bottom:10px;
+}
+
+button:hover{
+  background:#333;
+}
+
+button.guest-btn{
+  background:#6a4c93;
+}
+
+button.guest-btn:hover{
+  background:#5a3c83;
+}
+
+.signup{
+  margin-top:15px;
+  font-size:13px;
+}
+
+.signup a{
+  color:black;
+  font-weight:500;
+  text-decoration:none;
+}
+
+.error-message{
+  color:#e76f51;
+  font-size:12px;
+  margin-top:10px;
+  display:none;
+}
+
+.success-message{
+  color:#2a9d8f;
+  font-size:12px;
+  margin-top:10px;
+  display:none;
+}
+
+.separator{
+  margin:15px 0;
+  display:flex;
+  align-items:center;
+  text-align:center;
+  font-size:12px;
+  color:#777;
+}
+
+.separator::before,
+.separator::after{
+  content:"";
+  flex:1;
+  border-bottom:1px solid #ddd;
+}
+
+.separator span{
+  margin:0 10px;
+}
+
+button.google-btn{
+  background:#ffffff;
+  color:#111;
+  border:1px solid #ddd;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+}
+
+button.google-btn:hover{
+  background:#f3f3f3;
+}
+
+.google-icon{
+  font-size:16px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="music-notes">
+  <span>♪</span>
+  <span>♫</span>
+  <span>♩</span>
+  <span>♪</span>
+  <span>♫</span>
+  <span>♩</span>
+  <span>♬</span>
+</div>
+
+<div class="container">
+  <div class="logo">Melody Matrix</div>
+  <div class="subtitle">AI Music Generator</div>
+
+  <form id="loginForm">
+    <div class="input-group">
+      <label>Email</label>
+      <input type="email" id="email" placeholder="Enter your email" required>
+    </div>
+
+    <div class="input-group">
+      <label>Password</label>
+      <input type="password" id="password" placeholder="Enter your password" required>
+    </div>
+
+    <div class="separator"><span>or</span></div>
+
+    <button type="button" class="google-btn" id="googleLoginBtn">
+      <span class="google-icon">G</span>
+      <span>Continue with Google</span>
+    </button>
+
+    <div class="error-message" id="errorMessage"></div>
+    <div class="success-message" id="successMessage"></div>
+
+    <button type="submit">Login</button>
+    <button type="button" class="guest-btn" id="guestBtn">Login as Guest</button>
+  </form>
+
+  <div class="signup">
+    Don't have an account? <a href="index.html">Sign Up</a>
+  </div>
+</div>
+
+<script>
+window.addEventListener('load', function() {
+  const errorMessage = document.getElementById('errorMessage');
+  const successMessage = document.getElementById('successMessage');
+  const loginForm = document.getElementById('loginForm');
+  const googleLoginBtn = document.getElementById('googleLoginBtn');
+  const guestBtn = document.getElementById('guestBtn');
+
+  let supabaseClient = null;
+
+  function showError(message) {
+    successMessage.style.display = 'none';
+    errorMessage.textContent = message;
+    errorMessage.style.display = 'block';
+  }
+
+  function showSuccess(message) {
+    errorMessage.style.display = 'none';
+    successMessage.textContent = message;
+    successMessage.style.display = 'block';
+  }
+
+  function clearMessages() {
+    errorMessage.style.display = 'none';
+    successMessage.style.display = 'none';
+  }
+
+  // Guest button should always work, even if Supabase/config is broken
+  guestBtn.addEventListener('click', function() {
+    clearMessages();
+
+    const guestUser = {
+      id: 'guest_' + Date.now(),
+      email: 'guest@melodymatrix.com',
+      isGuest: true
+    };
+
+    localStorage.setItem('user', JSON.stringify(guestUser));
+    localStorage.removeItem('session');
+    localStorage.setItem('isGuest', 'true');
+
+    showSuccess('Entering guest mode...');
+
+    setTimeout(() => {
+      window.location.href = 'guest.html';
+    }, 800);
+  });
+
+  // Try to initialize Supabase, but do not stop the whole page if it fails
+  const hasConfig =
+    typeof CONFIG !== 'undefined' &&
+    CONFIG &&
+    CONFIG.SUPABASE_URL &&
+    CONFIG.SUPABASE_ANON_KEY;
+
+  const hasSupabase = typeof supabase !== 'undefined';
+
+  if (hasConfig && hasSupabase) {
+    supabaseClient = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+  } else {
+    console.warn('Supabase not fully configured. Guest mode will still work.');
+  }
+
+  googleLoginBtn.addEventListener('click', async () => {
+    clearMessages();
+
+    if (!supabaseClient) {
+      showError('Supabase is not configured. Google login is unavailable right now.');
+      return;
+    }
+
+    try {
+      const { error } = await supabaseClient.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: new URL('dashboard.html', window.location.href).href
+        }
+      });
+
+      if (error) throw error;
+
+      showSuccess('Redirecting to Google...');
+    } catch (error) {
+      showError(error.message || 'Google login failed.');
+    }
+  });
+
+  loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    clearMessages();
+
+    if (!supabaseClient) {
+      showError('Supabase is not configured. Email login is unavailable right now.');
+      return;
+    }
+
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+
+    try {
+      const { data, error } = await supabaseClient.auth.signInWithPassword({
+        email: email,
+        password: password
+      });
+
+      if (error) throw error;
+
+      localStorage.setItem('user', JSON.stringify(data.user));
+      localStorage.setItem('session', JSON.stringify(data.session));
+      localStorage.removeItem('isGuest');
+
+      showSuccess('Login successful! Redirecting...');
+
+      setTimeout(() => {
+        window.location.href = 'dashboard.html';
+      }, 800);
+
+    } catch (error) {
+      showError(error.message || 'Login failed.');
+    }
+  });
+});
+</script>
+</body>
+</html>

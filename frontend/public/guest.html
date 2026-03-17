@@ -1,0 +1,1224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Melody Matrix Guest Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+      font-family:'Poppins',sans-serif;
+    }
+
+    :root{
+      --bg:#f8f4ee;
+      --bg-soft:#f3ece2;
+      --panel:#fffdf9;
+      --panel-2:#fff8f0;
+      --line:#e7d9c6;
+      --text:#171717;
+      --muted:#666;
+      --accent:#c89b63;
+      --accent-dark:#a9783e;
+      --accent-light:#f1dfc7;
+      --shadow:0 12px 30px rgba(76, 48, 20, 0.08);
+
+      --melody:#5ca8e6;
+      --bass:#9b72d6;
+      --drums:#e5a84a;
+      --chords:#59b38a;
+      --active:#ef4444;
+      --success:#2a9d8f;
+      --danger:#e76f51;
+      --warning:#b7791f;
+    }
+
+    body{
+      background:
+        radial-gradient(circle at top left, #fff6ee 0%, transparent 30%),
+        radial-gradient(circle at top right, #f9eadb 0%, transparent 28%),
+        linear-gradient(180deg,#fbf7f1 0%,#f3ebe0 100%);
+      color:var(--text);
+      min-height:100vh;
+      overflow-x:hidden;
+      position:relative;
+    }
+
+    .music-notes{
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      z-index:0;
+      overflow:hidden;
+    }
+
+    .music-notes span{
+      position:absolute;
+      bottom:-80px;
+      font-size:34px;
+      font-weight:700;
+      animation:floatNote linear infinite;
+      opacity:0.35;
+      filter:drop-shadow(0 4px 10px rgba(0,0,0,0.08));
+    }
+
+    .music-notes span:nth-child(1){ left:6%;  color:#f4a261; animation-duration:13s; animation-delay:0s; }
+    .music-notes span:nth-child(2){ left:16%; color:#e76f51; animation-duration:11s; animation-delay:2s; }
+    .music-notes span:nth-child(3){ left:29%; color:#2a9d8f; animation-duration:14s; animation-delay:4s; }
+    .music-notes span:nth-child(4){ left:43%; color:#6a4c93; animation-duration:12s; animation-delay:1s; }
+    .music-notes span:nth-child(5){ left:58%; color:#e9c46a; animation-duration:15s; animation-delay:3s; }
+    .music-notes span:nth-child(6){ left:72%; color:#5ca8e6; animation-duration:12.5s; animation-delay:5s; }
+    .music-notes span:nth-child(7){ left:86%; color:#ff8fab; animation-duration:13.5s; animation-delay:6s; }
+    .music-notes span:nth-child(8){ left:94%; color:#b08968; animation-duration:10.5s; animation-delay:7s; }
+
+    @keyframes floatNote{
+      0%{
+        transform:translateY(0) rotate(0deg) scale(0.9);
+        opacity:0;
+      }
+      12%{
+        opacity:0.38;
+      }
+      75%{
+        opacity:0.26;
+      }
+      100%{
+        transform:translateY(-115vh) rotate(360deg) scale(1.08);
+        opacity:0;
+      }
+    }
+
+    .app{
+      display:grid;
+      grid-template-columns:245px 1fr;
+      min-height:100vh;
+      position:relative;
+      z-index:1;
+    }
+
+    .sidebar{
+      background:rgba(255,255,255,0.62);
+      backdrop-filter:blur(10px);
+      border-right:1px solid var(--line);
+      padding:22px 16px;
+      display:flex;
+      flex-direction:column;
+      gap:22px;
+      box-shadow:inset -1px 0 0 rgba(255,255,255,0.35);
+    }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      margin-bottom:4px;
+    }
+
+    .brand-icon{
+      width:52px;
+      height:52px;
+      border-radius:18px;
+      background:linear-gradient(135deg,#f0d8b7,#c89b63);
+      color:white;
+      display:grid;
+      place-items:center;
+      font-size:25px;
+      font-weight:700;
+      box-shadow:var(--shadow);
+    }
+
+    .brand h2{
+      font-size:20px;
+      font-weight:700;
+      line-height:1.1;
+    }
+
+    .brand p{
+      font-size:12px;
+      color:var(--muted);
+      margin-top:2px;
+    }
+
+    .section-title{
+      font-size:11px;
+      text-transform:uppercase;
+      letter-spacing:2px;
+      color:#8b7d6a;
+      margin:8px 8px 4px;
+    }
+
+    .nav{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+
+    .nav-item{
+      display:flex;
+      align-items:center;
+      gap:14px;
+      text-decoration:none;
+      color:#3a332b;
+      padding:14px 14px;
+      border-radius:18px;
+      font-weight:500;
+      transition:.22s ease;
+    }
+
+    .nav-item:hover{
+      background:#f8efe3;
+      transform:translateX(2px);
+    }
+
+    .nav-item.active{
+      background:linear-gradient(180deg,#efe0cc 0%,#e8d7c0 100%);
+      box-shadow:inset 0 0 0 1px #dcc3a1;
+    }
+
+    .nav-icon{
+      width:40px;
+      height:40px;
+      border-radius:14px;
+      display:grid;
+      place-items:center;
+      background:#fffaf4;
+      border:1px solid var(--line);
+      flex-shrink:0;
+      box-shadow:0 4px 10px rgba(0,0,0,0.03);
+    }
+
+    .guest-box{
+      margin-top:auto;
+      padding:16px;
+      border-radius:18px;
+      background:linear-gradient(180deg,#fff7eb 0%, #f8ecd9 100%);
+      border:1px solid #e7cfac;
+      box-shadow:var(--shadow);
+    }
+
+    .guest-box h3{
+      font-size:16px;
+      margin-bottom:6px;
+    }
+
+    .guest-box p{
+      font-size:12px;
+      color:#6a5c49;
+      line-height:1.6;
+      margin-bottom:12px;
+    }
+
+    .mini-link-row{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+
+    .mini-link{
+      text-decoration:none;
+      padding:10px 12px;
+      border-radius:12px;
+      background:white;
+      border:1px solid var(--line);
+      color:#5b4a39;
+      font-size:12px;
+      font-weight:600;
+    }
+
+    .main{
+      padding:22px;
+    }
+
+    .topbar{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:14px;
+      margin-bottom:18px;
+    }
+
+    .topbar h1{
+      font-size:31px;
+      font-weight:700;
+      margin-bottom:4px;
+      letter-spacing:-0.4px;
+    }
+
+    .topbar p{
+      color:var(--muted);
+      font-size:14px;
+    }
+
+    .status-pill{
+      background:rgba(255,255,255,.88);
+      border:1px solid #e8d2ac;
+      border-radius:16px;
+      padding:12px 14px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      box-shadow:var(--shadow);
+      backdrop-filter:blur(8px);
+      font-size:14px;
+      font-weight:600;
+      color:#7a5f32;
+    }
+
+    .card{
+      background:rgba(255,255,255,.92);
+      border:1px solid var(--line);
+      border-radius:26px;
+      padding:20px;
+      box-shadow:var(--shadow);
+      margin-bottom:18px;
+      backdrop-filter:blur(8px);
+    }
+
+    .card-head{
+      margin-bottom:16px;
+    }
+
+    .card-head h3{
+      font-size:21px;
+      font-weight:700;
+      margin-bottom:4px;
+    }
+
+    .card-head p{
+      color:var(--muted);
+      font-size:13px;
+    }
+
+    .notice{
+      background:linear-gradient(180deg,#fff6e8 0%, #fef0d8 100%);
+      border:1px solid #ead1aa;
+      color:#6a5536;
+      padding:14px 16px;
+      border-radius:16px;
+      font-size:13px;
+      line-height:1.7;
+      margin-bottom:16px;
+    }
+
+    .controls-grid{
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:12px;
+      margin-bottom:14px;
+    }
+
+    .field label{
+      display:block;
+      font-size:13px;
+      font-weight:500;
+      margin-bottom:6px;
+      color:#4b4339;
+    }
+
+    .input,
+    .select{
+      width:100%;
+      padding:12px 14px;
+      border:1px solid var(--line);
+      border-radius:14px;
+      background:#fffdfb;
+      outline:none;
+      font-size:14px;
+      transition:.2s ease;
+    }
+
+    .input:focus,
+    .select:focus{
+      border-color:#d5b58f;
+      box-shadow:0 0 0 3px rgba(201,169,125,0.12);
+    }
+
+    input[type="file"].input{
+      padding:10px 12px;
+    }
+
+    .readonly{
+      background:#f9f1e6;
+      color:#7a6240;
+      font-weight:600;
+    }
+
+    .sub-row{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-bottom:14px;
+      align-items:center;
+    }
+
+    .markov-btn,
+    .instrument-btn,
+    .btn,
+    .locked-chip{
+      cursor:pointer;
+      transition:.22s ease;
+      font-weight:600;
+    }
+
+    .markov-btn{
+      padding:10px 16px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background:white;
+      color:#4f4438;
+    }
+
+    .markov-btn.active{
+      background:linear-gradient(180deg,var(--accent) 0%, var(--accent-dark) 100%);
+      color:white;
+      border-color:var(--accent-dark);
+      box-shadow:0 6px 14px rgba(169,120,62,0.2);
+    }
+
+    .instrument-btn{
+      padding:10px 14px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background:white;
+      font-size:14px;
+      color:#4f4438;
+    }
+
+    .instrument-btn.active{
+      background:linear-gradient(180deg,var(--accent) 0%, var(--accent-dark) 100%);
+      color:white;
+      border-color:var(--accent-dark);
+      box-shadow:0 6px 14px rgba(169,120,62,0.2);
+    }
+
+    .locked-chip{
+      padding:10px 14px;
+      border-radius:12px;
+      border:1px dashed #d9b98f;
+      background:#fff7eb;
+      color:#8d6b41;
+      opacity:0.8;
+      cursor:not-allowed;
+    }
+
+    .btn-row{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .btn{
+      padding:12px 18px;
+      border:none;
+      border-radius:14px;
+      font-size:14px;
+    }
+
+    .btn:hover{
+      transform:translateY(-1px);
+    }
+
+    .btn-primary{
+      background:#111;
+      color:white;
+      box-shadow:0 8px 18px rgba(17,17,17,0.14);
+    }
+
+    .btn-soft{
+      background:#f7ede0;
+      color:#6b5236;
+      border:1px solid #ead4b9;
+    }
+
+    .btn-accent{
+      background:linear-gradient(180deg,var(--accent) 0%, var(--accent-dark) 100%);
+      color:white;
+      box-shadow:0 8px 18px rgba(169,120,62,0.2);
+    }
+
+    .btn-disabled{
+      background:#efe5d8;
+      color:#9a866a;
+      border:1px solid #e1ceb3;
+      cursor:not-allowed;
+    }
+
+    .graphs-grid{
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:16px;
+      margin-bottom:16px;
+    }
+
+    .graph-card{
+      background:linear-gradient(180deg,#fffaf4 0%, #fbf3e7 100%);
+      border:1px solid var(--line);
+      border-radius:22px;
+      padding:14px;
+    }
+
+    .graph-title{
+      font-weight:700;
+      margin-bottom:4px;
+      font-size:16px;
+    }
+
+    .graph-sub{
+      color:var(--muted);
+      font-size:12px;
+      margin-bottom:10px;
+    }
+
+    .graph-box{
+      position:relative;
+      width:100%;
+      height:280px;
+      border-radius:18px;
+      background:linear-gradient(180deg,#ffffff 0%, #fff8f1 100%);
+      border:1px solid var(--line);
+      overflow:hidden;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,0.6);
+    }
+
+    .graph-svg{
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+    }
+
+    .node{
+      position:absolute;
+      width:50px;
+      height:50px;
+      border-radius:50%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      transform:translate(-50%,-50%);
+      color:white;
+      font-size:10px;
+      font-weight:700;
+      text-align:center;
+      padding:4px;
+      z-index:2;
+      box-shadow:0 6px 14px rgba(0,0,0,.14);
+      white-space:pre-line;
+      line-height:1.1;
+    }
+
+    .walker{
+      position:absolute;
+      width:18px;
+      height:18px;
+      border-radius:50%;
+      background:var(--active);
+      border:3px solid white;
+      transform:translate(-50%,-50%);
+      z-index:3;
+      box-shadow:0 0 14px rgba(239,68,68,.55);
+      transition:all .28s ease;
+    }
+
+    .sequence-grid{
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:16px;
+    }
+
+    .sequence-box{
+      background:linear-gradient(180deg,#fffaf4 0%, #fbf3e7 100%);
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:14px;
+    }
+
+    .sequence-box h4{
+      font-size:15px;
+      margin-bottom:10px;
+    }
+
+    .sequence-history{
+      min-height:84px;
+      font-size:13px;
+      color:#5b5348;
+      line-height:1.7;
+      word-break:break-word;
+    }
+
+    .message{
+      display:none;
+      margin-top:12px;
+      padding:11px 13px;
+      border-radius:12px;
+      font-size:13px;
+    }
+
+    .message.success{
+      display:block;
+      background:rgba(42,157,143,.1);
+      color:var(--success);
+      border:1px solid rgba(42,157,143,.18);
+    }
+
+    .message.error{
+      display:block;
+      background:rgba(231,111,81,.1);
+      color:var(--danger);
+      border:1px solid rgba(231,111,81,.18);
+    }
+
+    @media (max-width: 1350px){
+      .graphs-grid,
+      .sequence-grid{
+        grid-template-columns:repeat(2,1fr);
+      }
+    }
+
+    @media (max-width: 980px){
+      .app{
+        grid-template-columns:1fr;
+      }
+
+      .sidebar{
+        border-right:none;
+        border-bottom:1px solid var(--line);
+      }
+
+      .controls-grid{
+        grid-template-columns:repeat(2,1fr);
+      }
+
+      .topbar{
+        flex-direction:column;
+        align-items:stretch;
+      }
+    }
+
+    @media (max-width: 640px){
+      .controls-grid,
+      .graphs-grid,
+      .sequence-grid{
+        grid-template-columns:1fr;
+      }
+
+      .main{
+        padding:14px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="music-notes">
+    <span>♪</span>
+    <span>♫</span>
+    <span>♩</span>
+    <span>♪</span>
+    <span>♫</span>
+    <span>♩</span>
+    <span>♬</span>
+    <span>♭</span>
+  </div>
+
+  <div class="app">
+    <aside class="sidebar">
+      <div>
+        <div class="brand">
+          <div class="brand-icon">♫</div>
+          <div>
+            <h2>Melody Matrix</h2>
+            <p>Markov Music Generator</p>
+          </div>
+        </div>
+
+        <div class="section-title">Menu</div>
+        <nav class="nav">
+          <a class="nav-item active" href="#"><div class="nav-icon">🏠</div><span>Guest Dashboard</span></a>
+          <a class="nav-item" href="#"><div class="nav-icon">🎼</div><span>Quick Jam</span></a>
+          <a class="nav-item" href="#"><div class="nav-icon">🔒</div><span>Saved Outputs</span></a>
+          <a class="nav-item" href="#"><div class="nav-icon">🔒</div><span>Advanced Settings</span></a>
+        </nav>
+      </div>
+
+      <div class="guest-box">
+        <h3>Guest Access</h3>
+        <p>
+          This is a temporary session. You can try the music generator with basic controls,
+          but save, history, and advanced Markov settings are locked.
+        </p>
+        <div class="mini-link-row">
+          <a class="mini-link" href="login.html">Log In</a>
+          <a class="mini-link" href="index.html">Sign Up</a>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="topbar">
+        <div>
+          <h1>Melody Matrix Studio</h1>
+          <p>Guest mode lets you upload MIDI or try a sample, set mood and BPM, and start a live jam session</p>
+        </div>
+        <div class="status-pill">
+          <span>👤</span>
+          <span>Guest Mode · Temporary Session</span>
+        </div>
+      </div>
+
+      <section class="card">
+        <div class="card-head">
+          <h3>Generation Controls</h3>
+          <p>Guest mode supports demo/sample input, BPM, mood, and first-order playback only</p>
+        </div>
+
+        <div class="notice">
+          Guest users can upload a MIDI file or choose a demo sample, adjust mood and tempo, and preview a live jam.
+          Markov Order is fixed at 1, and save, history, and advanced controls are available only after sign in.
+        </div>
+
+        <div class="controls-grid">
+          <div class="field">
+            <label for="midiUpload">Upload MIDI</label>
+            <input id="midiUpload" class="input" type="file" accept=".mid,.midi">
+          </div>
+
+          <div class="field">
+            <label for="demoSample">Demo Sample</label>
+            <select id="demoSample" class="select">
+              <option>Ambient Starter</option>
+              <option>Lo-Fi Chill</option>
+              <option>Dark Pulse</option>
+              <option>Happy Groove</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="mood">Mood</label>
+            <select id="mood" class="select">
+              <option>Calm</option>
+              <option>Happy</option>
+              <option>Dark</option>
+              <option>Energetic</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="bpm">Tempo (BPM)</label>
+            <input id="bpm" class="input" type="number" min="60" max="220" value="110">
+          </div>
+        </div>
+
+        <div class="sub-row">
+          <strong style="font-size:14px;">Markov Order</strong>
+          <button class="markov-btn active" type="button">1</button>
+          <span class="locked-chip">Order 2 Locked</span>
+          <span class="locked-chip">Order 3 Locked</span>
+        </div>
+
+        <div class="sub-row">
+          <strong style="font-size:14px;">Instruments</strong>
+          <button class="instrument-btn active" data-inst="melody">Melody</button>
+          <button class="instrument-btn active" data-inst="bass">Bass</button>
+          <button class="instrument-btn active" data-inst="drums">Drums</button>
+          <button class="instrument-btn active" data-inst="chords">Chords</button>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-primary" id="startBtn">▶ Start</button>
+          <button class="btn btn-soft" id="stepBtn">Next Step</button>
+          <button class="btn btn-soft" id="stopBtn">Stop</button>
+          <button class="btn btn-disabled" id="saveBtn" type="button">Save Output</button>
+          <button class="btn btn-disabled" id="historyBtn" type="button">History</button>
+        </div>
+
+        <div id="mainMessage" class="message"></div>
+      </section>
+
+      <section class="card">
+        <div class="card-head">
+          <h3>Live Music Workspace</h3>
+          <p>Preview melody, bass, drums, and chords in a simplified guest session</p>
+        </div>
+
+        <div class="graphs-grid">
+          <div class="graph-card">
+            <div class="graph-title">Melody Brain</div>
+            <div class="graph-sub">Mood-aware melodic transition graph</div>
+            <div class="graph-box" id="graph-melody"></div>
+          </div>
+
+          <div class="graph-card">
+            <div class="graph-title">Bass Brain</div>
+            <div class="graph-sub">Low-end groove transitions</div>
+            <div class="graph-box" id="graph-bass"></div>
+          </div>
+
+          <div class="graph-card">
+            <div class="graph-title">Drum Brain</div>
+            <div class="graph-sub">Rhythm graph driven by tempo and mood</div>
+            <div class="graph-box" id="graph-drums"></div>
+          </div>
+
+          <div class="graph-card">
+            <div class="graph-title">Chord Brain</div>
+            <div class="graph-sub">Harmonic support transitions</div>
+            <div class="graph-box" id="graph-chords"></div>
+          </div>
+        </div>
+
+        <div class="sequence-grid">
+          <div class="sequence-box">
+            <h4>Melody Sequence</h4>
+            <div class="sequence-history" id="melodyHistory">Do</div>
+          </div>
+
+          <div class="sequence-box">
+            <h4>Bass Sequence</h4>
+            <div class="sequence-history" id="bassHistory">Do</div>
+          </div>
+
+          <div class="sequence-box">
+            <h4>Drum Sequence</h4>
+            <div class="sequence-history" id="drumHistory">Closed</div>
+          </div>
+
+          <div class="sequence-box">
+            <h4>Chord Sequence</h4>
+            <div class="sequence-history" id="chordsHistory">i</div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const moodChains = {
+      Calm: {
+        melody: {
+          "Do": ["Fa", "Sol", "Mib"],
+          "Re": ["Do", "Fa"],
+          "Mib": ["Do", "Fa", "Sol"],
+          "Fa": ["Sol", "Do_Alto", "Mib"],
+          "Sol": ["Fa", "Do_Alto"],
+          "Sib": ["Fa", "Sol"],
+          "Do_Alto": ["Sol", "Fa", "Mib"]
+        },
+        bass: {
+          "Do": ["Pausa", "Mib", "Do"],
+          "Mib": ["Do", "Fa"],
+          "Fa": ["Pausa", "Sol"],
+          "Sol": ["Do", "Pausa"],
+          "Sib": ["Fa", "Do"],
+          "Pausa": ["Do", "Fa", "Sol"]
+        },
+        drums: {
+          "Closed": ["Pausa", "Closed", "Open"],
+          "Open": ["Pausa", "Closed"],
+          "Pausa": ["Closed", "Pausa", "Open"]
+        },
+        chords: {
+          "i": ["VI", "iv", "i"],
+          "iv": ["i", "VI"],
+          "v": ["i"],
+          "VI": ["i", "VII"],
+          "VII": ["i", "iv"]
+        }
+      },
+
+      Happy: {
+        melody: {
+          "Do": ["Sol", "Fa", "Do_Alto"],
+          "Re": ["Fa", "Sol"],
+          "Mib": ["Sol", "Do"],
+          "Fa": ["Do", "Sol", "Do_Alto"],
+          "Sol": ["Do", "Fa", "Sib"],
+          "Sib": ["Do_Alto", "Sol"],
+          "Do_Alto": ["Sol", "Fa", "Do"]
+        },
+        bass: {
+          "Do": ["Do", "Sol", "Pausa"],
+          "Mib": ["Do", "Fa"],
+          "Fa": ["Sol", "Do"],
+          "Sol": ["Do", "Sol", "Sib"],
+          "Sib": ["Do", "Sol"],
+          "Pausa": ["Do", "Do", "Sol"]
+        },
+        drums: {
+          "Closed": ["Closed", "Closed", "Open"],
+          "Open": ["Closed", "Closed"],
+          "Pausa": ["Closed", "Open"]
+        },
+        chords: {
+          "i": ["VI", "III", "VII"],
+          "III": ["VI", "VII"],
+          "VI": ["i", "III"],
+          "VII": ["i", "VI"]
+        }
+      },
+
+      Dark: {
+        melody: {
+          "Do": ["Mib", "Fa", "Do"],
+          "Re": ["Do", "Fa"],
+          "Mib": ["Do", "Sol"],
+          "Fa": ["Do", "Mib", "PausaMelody"],
+          "Sol": ["Fa", "Mib", "Do"],
+          "Sib": ["Sol", "Fa"],
+          "Do_Alto": ["Sol", "Mib"]
+        },
+        bass: {
+          "Do": ["Do", "Pausa", "Mib"],
+          "Mib": ["Do", "Pausa"],
+          "Fa": ["Sol", "Do"],
+          "Sol": ["Do", "Pausa", "Sib"],
+          "Sib": ["Do", "Sol"],
+          "Pausa": ["Do", "Mib", "Sol"]
+        },
+        drums: {
+          "Closed": ["Closed", "Pausa", "Open"],
+          "Open": ["Closed", "Pausa"],
+          "Pausa": ["Closed", "Closed", "Open"]
+        },
+        chords: {
+          "i": ["VII", "VI", "i"],
+          "VI": ["i", "VII"],
+          "VII": ["i", "VI"],
+          "iv": ["i"]
+        }
+      },
+
+      Energetic: {
+        melody: {
+          "Do": ["Mib", "Sol", "Fa"],
+          "Re": ["Do", "Mib"],
+          "Mib": ["Fa", "Sol", "Do"],
+          "Fa": ["Mib", "Sol"],
+          "Sol": ["Sib", "Do_Alto", "Fa"],
+          "Sib": ["Sol", "Do_Alto"],
+          "Do_Alto": ["Sib", "Sol"]
+        },
+        bass: {
+          "Do": ["Do", "Do", "Mib", "Pausa"],
+          "Mib": ["Fa", "Do"],
+          "Fa": ["Sol", "Do"],
+          "Sol": ["Do", "Do", "Sib"],
+          "Sib": ["Sol", "Do"],
+          "Pausa": ["Do", "Sol"]
+        },
+        drums: {
+          "Closed": ["Closed", "Open", "Pausa"],
+          "Open": ["Closed", "Pausa"],
+          "Pausa": ["Closed", "Open"]
+        },
+        chords: {
+          "i": ["iv", "v", "VI"],
+          "iv": ["i", "v"],
+          "v": ["i", "VII"],
+          "VI": ["iv", "VII"],
+          "VII": ["i", "v"]
+        }
+      }
+    };
+
+    const displayMap = {
+      "Do": "Do",
+      "Re": "Re",
+      "Mib": "Mib",
+      "Fa": "Fa",
+      "Sol": "Sol",
+      "Sib": "Sib",
+      "Do_Alto": "Do_Alto",
+      "Pausa": "Pausa",
+      "Closed": "Closed",
+      "Open": "Open",
+      "PausaMelody": "Rest",
+      "i": "Cm",
+      "III": "Eb",
+      "iv": "Fm",
+      "v": "Gm",
+      "VI": "Ab",
+      "VII": "Bb"
+    };
+
+    let isRunning = false;
+    let intervalId = null;
+    let selectedOrder = 1;
+
+    const mainMessage = document.getElementById('mainMessage');
+    const bpmInput = document.getElementById('bpm');
+    const moodSelect = document.getElementById('mood');
+
+    const graphs = {
+      melody: {
+        id: 'graph-melody',
+        current: 'Do',
+        color: getComputedStyle(document.documentElement).getPropertyValue('--melody').trim(),
+        positions: {},
+        walker: null,
+        history: ['Do']
+      },
+      bass: {
+        id: 'graph-bass',
+        current: 'Do',
+        color: getComputedStyle(document.documentElement).getPropertyValue('--bass').trim(),
+        positions: {},
+        walker: null,
+        history: ['Do']
+      },
+      drums: {
+        id: 'graph-drums',
+        current: 'Closed',
+        color: getComputedStyle(document.documentElement).getPropertyValue('--drums').trim(),
+        positions: {},
+        walker: null,
+        history: ['Closed']
+      },
+      chords: {
+        id: 'graph-chords',
+        current: 'i',
+        color: getComputedStyle(document.documentElement).getPropertyValue('--chords').trim(),
+        positions: {},
+        walker: null,
+        history: ['i']
+      }
+    };
+
+    function showMessage(el, text, type='success') {
+      el.className = `message ${type}`;
+      el.textContent = text;
+      setTimeout(() => {
+        el.className = 'message';
+        el.textContent = '';
+      }, 2400);
+    }
+
+    function getCurrentMood() {
+      return moodSelect.value;
+    }
+
+    function getBase(type) {
+      return moodChains[getCurrentMood()][type];
+    }
+
+    function getLabel(nodeKey) {
+      return (displayMap[nodeKey] || nodeKey).replace('_', '\n');
+    }
+
+    function getNodeList(type) {
+      const baseNodes = Object.keys(getBase(type));
+      if (type === 'melody' && getCurrentMood() === "Dark" && !baseNodes.includes("PausaMelody")) {
+        baseNodes.push("PausaMelody");
+      }
+      return baseNodes;
+    }
+
+    function createGraph(type) {
+      const graph = graphs[type];
+      const box = document.getElementById(graph.id);
+      const nodes = getNodeList(type);
+
+      if (!nodes.includes(graph.current)) {
+        graph.current = nodes[0];
+        graph.history = [graph.current];
+      }
+
+      const width = box.clientWidth || 320;
+      const height = box.clientHeight || 280;
+      const centerX = width / 2;
+      const centerY = height / 2;
+      const radius = Math.min(width, height) / 2 - 38;
+
+      box.innerHTML = '';
+      graph.positions = {};
+
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('class', 'graph-svg');
+      svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+
+      nodes.forEach((node, i) => {
+        const angle = (2 * Math.PI * i) / nodes.length - Math.PI / 2;
+        const x = centerX + radius * Math.cos(angle);
+        const y = centerY + radius * Math.sin(angle);
+        graph.positions[node] = { x, y };
+      });
+
+      const chain = getBase(type);
+
+      Object.entries(chain).forEach(([source, targets]) => {
+        const from = graph.positions[source];
+        if (!from) return;
+        targets.forEach(target => {
+          if (!graph.positions[target]) return;
+          const to = graph.positions[target];
+          const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+          line.setAttribute('x1', from.x);
+          line.setAttribute('y1', from.y);
+          line.setAttribute('x2', to.x);
+          line.setAttribute('y2', to.y);
+          line.setAttribute('stroke', '#dccdb9');
+          line.setAttribute('stroke-width', '2');
+          line.setAttribute('opacity', '0.95');
+          svg.appendChild(line);
+        });
+      });
+
+      box.appendChild(svg);
+
+      nodes.forEach(node => {
+        const pos = graph.positions[node];
+        const nodeEl = document.createElement('div');
+        nodeEl.className = 'node';
+        nodeEl.style.left = `${pos.x}px`;
+        nodeEl.style.top = `${pos.y}px`;
+        nodeEl.style.background = graph.color;
+        nodeEl.textContent = getLabel(node);
+        box.appendChild(nodeEl);
+      });
+
+      const walker = document.createElement('div');
+      walker.className = 'walker';
+      const start = graph.positions[graph.current];
+      walker.style.left = `${start.x}px`;
+      walker.style.top = `${start.y}px`;
+      box.appendChild(walker);
+      graph.walker = walker;
+    }
+
+    function updateHistory(type) {
+      const historyIdMap = {
+        melody: 'melodyHistory',
+        bass: 'bassHistory',
+        drums: 'drumHistory',
+        chords: 'chordsHistory'
+      };
+
+      const graph = graphs[type];
+      const displayHistory = graph.history.map(getLabel).join(' → ');
+      document.getElementById(historyIdMap[type]).textContent = displayHistory;
+    }
+
+    function stepGraph(type) {
+      const graph = graphs[type];
+      const chain = getBase(type);
+      const options = chain[graph.current] || Object.keys(chain);
+      graph.current = options[Math.floor(Math.random() * options.length)];
+
+      const pos = graph.positions[graph.current];
+      if (graph.walker && pos) {
+        graph.walker.style.left = `${pos.x}px`;
+        graph.walker.style.top = `${pos.y}px`;
+      }
+
+      graph.history.push(graph.current);
+      while (graph.history.length > 8) {
+        graph.history.shift();
+      }
+
+      updateHistory(type);
+    }
+
+    function stepAll() {
+      if (document.querySelector('[data-inst="melody"]').classList.contains('active')) stepGraph('melody');
+      if (document.querySelector('[data-inst="bass"]').classList.contains('active')) stepGraph('bass');
+      if (document.querySelector('[data-inst="drums"]').classList.contains('active')) stepGraph('drums');
+      if (document.querySelector('[data-inst="chords"]').classList.contains('active')) stepGraph('chords');
+    }
+
+    function redrawGraphs() {
+      createGraph('melody');
+      createGraph('bass');
+      createGraph('drums');
+      createGraph('chords');
+      updateHistory('melody');
+      updateHistory('bass');
+      updateHistory('drums');
+      updateHistory('chords');
+    }
+
+    function resetHistories() {
+      graphs.melody.history = [graphs.melody.current];
+      graphs.bass.history = [graphs.bass.current];
+      graphs.drums.history = [graphs.drums.current];
+      graphs.chords.history = [graphs.chords.current];
+      updateHistory('melody');
+      updateHistory('bass');
+      updateHistory('drums');
+      updateHistory('chords');
+    }
+
+    function getIntervalByControls() {
+      const bpm = Number(bpmInput.value) || 110;
+      return Math.max(180, (60000 / bpm) / 2);
+    }
+
+    function startPlayback() {
+      if (isRunning) return;
+      isRunning = true;
+      intervalId = setInterval(stepAll, getIntervalByControls());
+      showMessage(
+        mainMessage,
+        `Guest jam started in ${getCurrentMood()} mood at ${bpmInput.value} BPM with Markov Order ${selectedOrder}.`,
+        'success'
+      );
+    }
+
+    function stopPlayback() {
+      isRunning = false;
+      clearInterval(intervalId);
+      intervalId = null;
+      showMessage(mainMessage, 'Guest playback stopped.', 'success');
+    }
+
+    document.getElementById('startBtn').addEventListener('click', startPlayback);
+    document.getElementById('stopBtn').addEventListener('click', stopPlayback);
+
+    document.getElementById('stepBtn').addEventListener('click', () => {
+      stepAll();
+      showMessage(
+        mainMessage,
+        `Advanced one step — Mood: ${getCurrentMood()}, BPM: ${bpmInput.value}, Order: ${selectedOrder}.`,
+        'success'
+      );
+    });
+
+    document.getElementById('saveBtn').addEventListener('click', () => {
+      showMessage(mainMessage, 'Save is disabled in guest mode. Please sign in to save output.', 'error');
+    });
+
+    document.getElementById('historyBtn').addEventListener('click', () => {
+      showMessage(mainMessage, 'History is disabled in guest mode. Please sign in to access history.', 'error');
+    });
+
+    document.querySelectorAll('.instrument-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        btn.classList.toggle('active');
+      });
+    });
+
+    moodSelect.addEventListener('change', () => {
+      stopPlayback();
+      graphs.melody.current = "Do";
+      graphs.bass.current = "Do";
+      graphs.drums.current = "Closed";
+      graphs.chords.current = "i";
+      redrawGraphs();
+      resetHistories();
+      showMessage(mainMessage, `Mood changed to ${getCurrentMood()}. Guest graph behavior updated.`, 'success');
+    });
+
+    bpmInput.addEventListener('input', () => {
+      if (isRunning) {
+        clearInterval(intervalId);
+        intervalId = setInterval(stepAll, getIntervalByControls());
+      }
+    });
+
+    window.addEventListener('resize', redrawGraphs);
+
+    redrawGraphs();
+  </script>
+</body>
+</html>
