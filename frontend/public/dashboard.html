@@ -64,7 +64,7 @@
       filter:drop-shadow(0 4px 10px rgba(0,0,0,0.08));
     }
 
-    .music-notes span:nth-child(1){ left:6%;  color:#f4a261; animation-duration:13s; animation-delay:0s; }
+    .music-notes span:nth-child(1){ left:6%; color:#f4a261; animation-duration:13s; animation-delay:0s; }
     .music-notes span:nth-child(2){ left:16%; color:#e76f51; animation-duration:11s; animation-delay:2s; }
     .music-notes span:nth-child(3){ left:29%; color:#2a9d8f; animation-duration:14s; animation-delay:4s; }
     .music-notes span:nth-child(4){ left:43%; color:#6a4c93; animation-duration:12s; animation-delay:1s; }
@@ -242,6 +242,7 @@
       box-shadow:var(--shadow);
       margin-bottom:18px;
       backdrop-filter:blur(8px);
+      overflow:hidden;
     }
 
     .card-head{
@@ -365,9 +366,9 @@
     }
 
     .btn-primary{
-      background:#111;
+      background:linear-gradient(180deg,var(--accent) 0%, var(--accent-dark) 100%);
       color:white;
-      box-shadow:0 8px 18px rgba(17,17,17,0.14);
+      box-shadow:0 8px 18px rgba(169,120,62,0.2);
     }
 
     .btn-soft{
@@ -386,7 +387,6 @@
       display:grid;
       grid-template-columns:repeat(4,1fr);
       gap:16px;
-      margin-bottom:16px;
     }
 
     .graph-card{
@@ -394,18 +394,19 @@
       border:1px solid var(--line);
       border-radius:22px;
       padding:14px;
+      transition:box-shadow .22s ease, border .22s ease, transform .22s ease;
+    }
+
+    .graph-card.selected{
+      border:2px solid var(--accent-dark);
+      box-shadow:0 8px 20px rgba(169,120,62,0.18);
+      transform:translateY(-2px);
     }
 
     .graph-title{
       font-weight:700;
-      margin-bottom:4px;
+      margin-bottom:12px;
       font-size:16px;
-    }
-
-    .graph-sub{
-      color:var(--muted);
-      font-size:12px;
-      margin-bottom:10px;
     }
 
     .graph-box{
@@ -459,30 +460,38 @@
       transition:all .28s ease;
     }
 
-    .sequence-grid{
+    .output-grid{
       display:grid;
-      grid-template-columns:repeat(4,1fr);
+      grid-template-columns:repeat(2,1fr);
       gap:16px;
+      margin-bottom:16px;
     }
 
-    .sequence-box{
+    .output-box{
       background:linear-gradient(180deg,#fffaf4 0%, #fbf3e7 100%);
       border:1px solid var(--line);
       border-radius:18px;
-      padding:14px;
+      padding:16px;
     }
 
-    .sequence-box h4{
-      font-size:15px;
+    .output-box h4{
+      font-size:16px;
       margin-bottom:10px;
     }
 
-    .sequence-history{
-      min-height:84px;
-      font-size:13px;
+    .output-text{
+      min-height:66px;
+      font-size:14px;
       color:#5b5348;
       line-height:1.7;
       word-break:break-word;
+    }
+
+    .session-actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:6px;
     }
 
     .message{
@@ -508,8 +517,7 @@
     }
 
     @media (max-width: 1350px){
-      .graphs-grid,
-      .sequence-grid{
+      .graphs-grid{
         grid-template-columns:repeat(2,1fr);
       }
     }
@@ -536,12 +544,15 @@
       .search{
         width:100%;
       }
+
+      .output-grid{
+        grid-template-columns:1fr;
+      }
     }
 
     @media (max-width: 640px){
       .controls-grid,
-      .graphs-grid,
-      .sequence-grid{
+      .graphs-grid{
         grid-template-columns:1fr;
       }
 
@@ -612,6 +623,7 @@
               <option>Hip Hop</option>
             </select>
           </div>
+
           <div class="field">
             <label for="scale">Scale</label>
             <select id="scale" class="select">
@@ -619,10 +631,12 @@
               <option>C Major</option>
             </select>
           </div>
+
           <div class="field">
             <label for="bpm">Tempo (BPM)</label>
             <input id="bpm" class="input" type="number" min="60" max="220" value="150">
           </div>
+
           <div class="field">
             <label for="noteLimit">Note Limit</label>
             <input id="noteLimit" class="input" type="number" min="4" max="20" value="8">
@@ -646,8 +660,8 @@
 
         <div class="btn-row">
           <button class="btn btn-primary" id="startBtn">▶ Start</button>
-          <button class="btn btn-soft" id="stepBtn">Next Step</button>
           <button class="btn btn-soft" id="stopBtn">Stop</button>
+          <button class="btn btn-soft" id="resetBtn">Reset</button>
           <button class="btn btn-accent" id="saveBtn">Save Output</button>
         </div>
 
@@ -657,56 +671,67 @@
       <section class="card">
         <div class="card-head">
           <h3>Live Music Workspace</h3>
-          <p>Compare graph movement and sequence changes while switching genre, scale, BPM, note limit, and order</p>
+          <p>Compare graph movement while switching genre, scale, BPM, note limit, and order</p>
         </div>
 
         <div class="graphs-grid">
-          <div class="graph-card">
-            <div class="graph-title">Melody Brain</div>
-            <div class="graph-sub">Scale-aware melodic transition graph</div>
+          <div class="graph-card" id="card-melody">
+            <div class="graph-title">Melody</div>
             <div class="graph-box" id="graph-melody"></div>
           </div>
 
-          <div class="graph-card">
-            <div class="graph-title">Bass Brain</div>
-            <div class="graph-sub">Genre-aware bass groove transition graph</div>
+          <div class="graph-card" id="card-bass">
+            <div class="graph-title">Bass</div>
             <div class="graph-box" id="graph-bass"></div>
           </div>
 
-          <div class="graph-card">
-            <div class="graph-title">Drum Brain</div>
-            <div class="graph-sub">Rhythm graph shaped by genre and order</div>
+          <div class="graph-card" id="card-drums">
+            <div class="graph-title">Drums</div>
             <div class="graph-box" id="graph-drums"></div>
           </div>
 
-          <div class="graph-card">
-            <div class="graph-title">Chord Brain</div>
-            <div class="graph-sub">Harmonic support transitions</div>
+          <div class="graph-card" id="card-chords">
+            <div class="graph-title">Chords</div>
             <div class="graph-box" id="graph-chords"></div>
           </div>
         </div>
+      </section>
 
-        <div class="sequence-grid">
-          <div class="sequence-box">
+      <section class="card">
+        <div class="card-head">
+          <h3>Generated Music Output</h3>
+          <p>View the latest generated note, rhythm, and harmony patterns from the current session</p>
+        </div>
+
+        <div class="output-grid">
+          <div class="output-box">
             <h4>Melody Sequence</h4>
-            <div class="sequence-history" id="melodyHistory">Do</div>
+            <div class="output-text" id="melodyHistory">Do</div>
           </div>
 
-          <div class="sequence-box">
+          <div class="output-box">
             <h4>Bass Sequence</h4>
-            <div class="sequence-history" id="bassHistory">Do</div>
+            <div class="output-text" id="bassHistory">Do</div>
           </div>
 
-          <div class="sequence-box">
+          <div class="output-box">
             <h4>Drum Sequence</h4>
-            <div class="sequence-history" id="drumHistory">Closed</div>
+            <div class="output-text" id="drumHistory">Closed</div>
           </div>
 
-          <div class="sequence-box">
+          <div class="output-box">
             <h4>Chord Sequence</h4>
-            <div class="sequence-history" id="chordsHistory">i</div>
+            <div class="output-text" id="chordsHistory">i</div>
           </div>
         </div>
+
+        <div class="session-actions">
+          <button class="btn btn-accent" id="saveSessionBtn">Save Session</button>
+          <button class="btn btn-soft" id="downloadMidiBtn">Download MIDI</button>
+          <button class="btn btn-soft" id="clearSessionBtn">Clear Session</button>
+        </div>
+
+        <div id="outputMessage" class="message"></div>
       </section>
     </main>
   </div>
@@ -886,6 +911,7 @@
     let intervalId = null;
 
     const mainMessage = document.getElementById('mainMessage');
+    const outputMessage = document.getElementById('outputMessage');
     const bpmInput = document.getElementById('bpm');
     const noteLimitInput = document.getElementById('noteLimit');
     const genreSelect = document.getElementById('genre');
@@ -894,6 +920,7 @@
     const graphs = {
       melody: {
         id: 'graph-melody',
+        cardId: 'card-melody',
         current: 'Do',
         color: getComputedStyle(document.documentElement).getPropertyValue('--melody').trim(),
         positions: {},
@@ -902,6 +929,7 @@
       },
       bass: {
         id: 'graph-bass',
+        cardId: 'card-bass',
         current: 'Do',
         color: getComputedStyle(document.documentElement).getPropertyValue('--bass').trim(),
         positions: {},
@@ -910,6 +938,7 @@
       },
       drums: {
         id: 'graph-drums',
+        cardId: 'card-drums',
         current: 'Closed',
         color: getComputedStyle(document.documentElement).getPropertyValue('--drums').trim(),
         positions: {},
@@ -918,6 +947,7 @@
       },
       chords: {
         id: 'graph-chords',
+        cardId: 'card-chords',
         current: 'i',
         color: getComputedStyle(document.documentElement).getPropertyValue('--chords').trim(),
         positions: {},
@@ -1163,6 +1193,7 @@
       updateHistory('bass');
       updateHistory('drums');
       updateHistory('chords');
+      syncSelectedCards();
     }
 
     function resetHistories() {
@@ -1189,9 +1220,22 @@
       return Math.max(160, (base * orderFactor * genreFactor) / 2);
     }
 
+    function syncSelectedCards() {
+      document.querySelectorAll('.graph-card').forEach(card => card.classList.remove('selected'));
+
+      document.querySelectorAll('.instrument-btn').forEach(btn => {
+        const inst = btn.dataset.inst;
+        const card = document.getElementById(`card-${inst}`);
+        if (btn.classList.contains('active') && card) {
+          card.classList.add('selected');
+        }
+      });
+    }
+
     function startPlayback() {
       if (isRunning) return;
       isRunning = true;
+      clearInterval(intervalId);
       intervalId = setInterval(stepAll, getIntervalByControls());
       showMessage(
         mainMessage,
@@ -1210,13 +1254,15 @@
     document.getElementById('startBtn').addEventListener('click', startPlayback);
     document.getElementById('stopBtn').addEventListener('click', stopPlayback);
 
-    document.getElementById('stepBtn').addEventListener('click', () => {
-      stepAll();
-      showMessage(
-        mainMessage,
-        `Advanced one step — Genre: ${getCurrentGenre()}, Scale: ${getCurrentScale()}, Order: ${selectedOrder}.`,
-        'success'
-      );
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      stopPlayback();
+      graphs.melody.current = "Do";
+      graphs.bass.current = "Do";
+      graphs.drums.current = "Closed";
+      graphs.chords.current = "i";
+      redrawGraphs();
+      resetHistories();
+      showMessage(mainMessage, 'Workspace reset.', 'success');
     });
 
     document.getElementById('saveBtn').addEventListener('click', () => {
@@ -1225,6 +1271,28 @@
         `Saved current state with ${getCurrentGenre()}, ${getCurrentScale()}, ${bpmInput.value} BPM, Order ${selectedOrder}.`,
         'success'
       );
+    });
+
+    document.getElementById('saveSessionBtn').addEventListener('click', () => {
+      showMessage(outputMessage, 'Session saved to your library.', 'success');
+    });
+
+    document.getElementById('downloadMidiBtn').addEventListener('click', () => {
+      showMessage(outputMessage, 'MIDI download prepared.', 'success');
+    });
+
+    document.getElementById('clearSessionBtn').addEventListener('click', () => {
+      stopPlayback();
+      graphs.melody.current = "Do";
+      graphs.bass.current = "Do";
+      graphs.drums.current = "Closed";
+      graphs.chords.current = "i";
+      graphs.melody.history = ["Do"];
+      graphs.bass.history = ["Do"];
+      graphs.drums.history = ["Closed"];
+      graphs.chords.history = ["i"];
+      redrawGraphs();
+      showMessage(outputMessage, 'Generated session cleared.', 'success');
     });
 
     document.querySelectorAll('.markov-btn').forEach(btn => {
@@ -1242,6 +1310,7 @@
     document.querySelectorAll('.instrument-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         btn.classList.toggle('active');
+        syncSelectedCards();
       });
     });
 
