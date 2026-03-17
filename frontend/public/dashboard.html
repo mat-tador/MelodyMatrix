@@ -301,6 +301,10 @@
       align-items:center;
     }
 
+    .sub-row-label{
+      font-size:14px;
+    }
+
     .markov-btn,
     .instrument-btn,
     .btn{
@@ -644,14 +648,14 @@
         </div>
 
         <div class="sub-row">
-          <strong style="font-size:14px;">Markov Order</strong>
+          <strong class="sub-row-label">Markov Order</strong>
           <button class="markov-btn" data-order="1">1</button>
           <button class="markov-btn active" data-order="2">2</button>
           <button class="markov-btn" data-order="3">3</button>
         </div>
 
         <div class="sub-row">
-          <strong style="font-size:14px;">Instruments</strong>
+          <strong class="sub-row-label">Instruments</strong>
           <button class="instrument-btn active" data-inst="melody">Melody</button>
           <button class="instrument-btn active" data-inst="bass">Bass</button>
           <button class="instrument-btn active" data-inst="drums">Drums</button>
@@ -737,6 +741,22 @@
   </div>
 
   <script>
+    const DEFAULT_STATE = {
+      melody: "Do",
+      bass: "Do",
+      drums: "Closed",
+      chords: "i"
+    };
+
+    const HISTORY_ELEMENT_IDS = {
+      melody: "melodyHistory",
+      bass: "bassHistory",
+      drums: "drumHistory",
+      chords: "chordsHistory"
+    };
+
+    const INSTRUMENT_TYPES = ["melody", "bass", "drums", "chords"];
+
     const baseChainsByGenre = {
       "Techno-Jazz": {
         melody: {
@@ -910,58 +930,68 @@
     let isRunning = false;
     let intervalId = null;
 
-    const mainMessage = document.getElementById('mainMessage');
-    const outputMessage = document.getElementById('outputMessage');
-    const bpmInput = document.getElementById('bpm');
-    const noteLimitInput = document.getElementById('noteLimit');
-    const genreSelect = document.getElementById('genre');
-    const scaleSelect = document.getElementById('scale');
+    const mainMessage = document.getElementById("mainMessage");
+    const outputMessage = document.getElementById("outputMessage");
+    const bpmInput = document.getElementById("bpm");
+    const noteLimitInput = document.getElementById("noteLimit");
+    const genreSelect = document.getElementById("genre");
+    const scaleSelect = document.getElementById("scale");
+
+    const rootStyles = getComputedStyle(document.documentElement);
+
+    const instrumentButtons = {
+      melody: document.querySelector('[data-inst="melody"]'),
+      bass: document.querySelector('[data-inst="bass"]'),
+      drums: document.querySelector('[data-inst="drums"]'),
+      chords: document.querySelector('[data-inst="chords"]')
+    };
 
     const graphs = {
       melody: {
-        id: 'graph-melody',
-        cardId: 'card-melody',
-        current: 'Do',
-        color: getComputedStyle(document.documentElement).getPropertyValue('--melody').trim(),
+        id: "graph-melody",
+        cardId: "card-melody",
+        current: DEFAULT_STATE.melody,
+        color: rootStyles.getPropertyValue("--melody").trim(),
         positions: {},
         walker: null,
-        history: ['Do']
+        history: [DEFAULT_STATE.melody]
       },
       bass: {
-        id: 'graph-bass',
-        cardId: 'card-bass',
-        current: 'Do',
-        color: getComputedStyle(document.documentElement).getPropertyValue('--bass').trim(),
+        id: "graph-bass",
+        cardId: "card-bass",
+        current: DEFAULT_STATE.bass,
+        color: rootStyles.getPropertyValue("--bass").trim(),
         positions: {},
         walker: null,
-        history: ['Do']
+        history: [DEFAULT_STATE.bass]
       },
       drums: {
-        id: 'graph-drums',
-        cardId: 'card-drums',
-        current: 'Closed',
-        color: getComputedStyle(document.documentElement).getPropertyValue('--drums').trim(),
+        id: "graph-drums",
+        cardId: "card-drums",
+        current: DEFAULT_STATE.drums,
+        color: rootStyles.getPropertyValue("--drums").trim(),
         positions: {},
         walker: null,
-        history: ['Closed']
+        history: [DEFAULT_STATE.drums]
       },
       chords: {
-        id: 'graph-chords',
-        cardId: 'card-chords',
-        current: 'i',
-        color: getComputedStyle(document.documentElement).getPropertyValue('--chords').trim(),
+        id: "graph-chords",
+        cardId: "card-chords",
+        current: DEFAULT_STATE.chords,
+        color: rootStyles.getPropertyValue("--chords").trim(),
         positions: {},
         walker: null,
-        history: ['i']
+        history: [DEFAULT_STATE.chords]
       }
     };
 
-    function showMessage(el, text, type='success') {
-      el.className = `message ${type}`;
-      el.textContent = text;
+    function showMessage(element, text, type = "success") {
+      element.className = `message ${type}`;
+      element.textContent = text;
+
       setTimeout(() => {
-        el.className = 'message';
-        el.textContent = '';
+        element.className = "message";
+        element.textContent = "";
       }, 2400);
     }
 
@@ -979,7 +1009,51 @@
 
     function getLabel(nodeKey) {
       const scale = scaleMaps[getCurrentScale()];
-      return (scale[nodeKey] || nodeKey).replace('_', '\n');
+      return (scale[nodeKey] || nodeKey).replace("_", "\n");
+    }
+
+    function isInstrumentActive(type) {
+      return instrumentButtons[type]?.classList.contains("active");
+    }
+
+    function updateHistory(type) {
+      const displayHistory = graphs[type].history.map(getLabel).join(" → ");
+      document.getElementById(HISTORY_ELEMENT_IDS[type]).textContent = displayHistory;
+    }
+
+    function updateAllHistories() {
+      INSTRUMENT_TYPES.forEach(updateHistory);
+    }
+
+    function setDefaultCurrents() {
+      INSTRUMENT_TYPES.forEach(type => {
+        graphs[type].current = DEFAULT_STATE[type];
+      });
+    }
+
+    function resetHistoriesFromCurrent() {
+      INSTRUMENT_TYPES.forEach(type => {
+        graphs[type].history = [graphs[type].current];
+      });
+      updateAllHistories();
+    }
+
+    function resetWorkspace() {
+      stopPlayback(false);
+      setDefaultCurrents();
+      redrawGraphs();
+      resetHistoriesFromCurrent();
+    }
+
+    function trimHistoriesToLimit() {
+      const limit = getHistoryLimit();
+
+      INSTRUMENT_TYPES.forEach(type => {
+        while (graphs[type].history.length > limit) {
+          graphs[type].history.shift();
+        }
+        updateHistory(type);
+      });
     }
 
     function buildOrderChain(baseChain, order, type) {
@@ -990,21 +1064,24 @@
       if (order === 2) {
         const adjusted = {};
         for (const key in baseChain) {
-          const vals = [...baseChain[key]];
-          adjusted[key] = vals.length > 1 ? [vals[0], vals[0], ...vals] : vals;
+          const values = [...baseChain[key]];
+          adjusted[key] = values.length > 1 ? [values[0], values[0], ...values] : values;
         }
         return adjusted;
       }
 
       const adjusted = {};
       const allKeys = Object.keys(baseChain);
+
       for (const key in baseChain) {
-        const vals = [...baseChain[key]];
-        const extras = allKeys.filter(k => k !== key).slice(0, type === 'drums' ? 1 : 2);
-        adjusted[key] = vals.length > 1
-          ? [vals[0], vals[0], vals[1], ...vals, ...extras]
-          : [...vals, ...extras];
+        const values = [...baseChain[key]];
+        const extras = allKeys.filter(k => k !== key).slice(0, type === "drums" ? 1 : 2);
+
+        adjusted[key] = values.length > 1
+          ? [values[0], values[0], values[1], ...values, ...extras]
+          : [...values, ...extras];
       }
+
       return adjusted;
     }
 
@@ -1012,41 +1089,54 @@
       const genre = getCurrentGenre();
       const adjusted = {};
 
-      for (const key in chain) adjusted[key] = [...chain[key]];
+      for (const key in chain) {
+        adjusted[key] = [...chain[key]];
+      }
 
       if (genre === "Ambient") {
-        for (const key in adjusted) adjusted[key].push(key);
+        for (const key in adjusted) {
+          adjusted[key].push(key);
+        }
       }
 
       if (genre === "House") {
-        if (type === 'drums') {
-          for (const key in adjusted) adjusted[key].push("Closed");
+        if (type === "drums") {
+          for (const key in adjusted) {
+            adjusted[key].push("Closed");
+          }
         }
-        if (type === 'bass') {
+
+        if (type === "bass" && adjusted["Do"]) {
           adjusted["Do"] = ["Do", "Do", "Sol", "Pausa", ...adjusted["Do"]];
         }
-        if (type === 'chords' && adjusted["i"]) {
+
+        if (type === "chords" && adjusted["i"]) {
           adjusted["i"] = ["VI", "VI", ...adjusted["i"]];
         }
       }
 
       if (genre === "Hip Hop") {
-        if (type === 'bass' && adjusted["Pausa"]) {
+        if (type === "bass" && adjusted["Pausa"]) {
           adjusted["Pausa"] = ["Do", "Mib", "Sol", "Pausa"];
         }
-        if (type === 'melody') {
-          for (const key in adjusted) adjusted[key].push("PausaMelody");
+
+        if (type === "melody") {
+          for (const key in adjusted) {
+            adjusted[key].push("PausaMelody");
+          }
         }
-        if (type === 'chords' && adjusted["i"]) {
+
+        if (type === "chords" && adjusted["i"]) {
           adjusted["i"] = ["VII", "VI", ...adjusted["i"]];
         }
       }
 
       if (genre === "Techno-Jazz") {
-        if (type === 'melody' && adjusted["Sol"]) {
+        if (type === "melody" && adjusted["Sol"]) {
           adjusted["Sol"] = ["Sib", "Do_Alto", "Fa", "Mib", ...adjusted["Sol"]];
         }
-        if (type === 'chords' && adjusted["i"]) {
+
+        if (type === "chords" && adjusted["i"]) {
           adjusted["i"] = ["iv", "v", "VI", ...adjusted["i"]];
         }
       }
@@ -1062,9 +1152,15 @@
 
     function getNodeList(type) {
       const baseNodes = Object.keys(getBase(type));
-      if (type === 'melody' && getCurrentGenre() === "Hip Hop" && !baseNodes.includes("PausaMelody")) {
+
+      if (
+        type === "melody" &&
+        getCurrentGenre() === "Hip Hop" &&
+        !baseNodes.includes("PausaMelody")
+      ) {
         baseNodes.push("PausaMelody");
       }
+
       return baseNodes;
     }
 
@@ -1084,15 +1180,15 @@
       const centerY = height / 2;
       const radius = Math.min(width, height) / 2 - 38;
 
-      box.innerHTML = '';
+      box.innerHTML = "";
       graph.positions = {};
 
-      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-      svg.setAttribute('class', 'graph-svg');
-      svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.setAttribute("class", "graph-svg");
+      svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
 
-      nodes.forEach((node, i) => {
-        const angle = (2 * Math.PI * i) / nodes.length - Math.PI / 2;
+      nodes.forEach((node, index) => {
+        const angle = (2 * Math.PI * index) / nodes.length - Math.PI / 2;
         const x = centerX + radius * Math.cos(angle);
         const y = centerY + radius * Math.sin(angle);
         graph.positions[node] = { x, y };
@@ -1103,17 +1199,19 @@
       Object.entries(chain).forEach(([source, targets]) => {
         const from = graph.positions[source];
         if (!from) return;
+
         targets.forEach(target => {
-          if (!graph.positions[target]) return;
           const to = graph.positions[target];
-          const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-          line.setAttribute('x1', from.x);
-          line.setAttribute('y1', from.y);
-          line.setAttribute('x2', to.x);
-          line.setAttribute('y2', to.y);
-          line.setAttribute('stroke', '#dccdb9');
-          line.setAttribute('stroke-width', '2');
-          line.setAttribute('opacity', '0.95');
+          if (!to) return;
+
+          const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+          line.setAttribute("x1", from.x);
+          line.setAttribute("y1", from.y);
+          line.setAttribute("x2", to.x);
+          line.setAttribute("y2", to.y);
+          line.setAttribute("stroke", "#dccdb9");
+          line.setAttribute("stroke-width", "2");
+          line.setAttribute("opacity", "0.95");
           svg.appendChild(line);
         });
       });
@@ -1122,8 +1220,8 @@
 
       nodes.forEach(node => {
         const pos = graph.positions[node];
-        const nodeEl = document.createElement('div');
-        nodeEl.className = 'node';
+        const nodeEl = document.createElement("div");
+        nodeEl.className = "node";
         nodeEl.style.left = `${pos.x}px`;
         nodeEl.style.top = `${pos.y}px`;
         nodeEl.style.background = graph.color;
@@ -1131,11 +1229,13 @@
         box.appendChild(nodeEl);
       });
 
-      const walker = document.createElement('div');
-      walker.className = 'walker';
+      const walker = document.createElement("div");
+      walker.className = "walker";
+
       const start = graph.positions[graph.current];
       walker.style.left = `${start.x}px`;
       walker.style.top = `${start.y}px`;
+
       box.appendChild(walker);
       graph.walker = walker;
     }
@@ -1144,23 +1244,11 @@
       return Math.max(4, Math.min(20, Number(noteLimitInput.value) || 8));
     }
 
-    function updateHistory(type) {
-      const historyIdMap = {
-        melody: 'melodyHistory',
-        bass: 'bassHistory',
-        drums: 'drumHistory',
-        chords: 'chordsHistory'
-      };
-
-      const graph = graphs[type];
-      const displayHistory = graph.history.map(getLabel).join(' → ');
-      document.getElementById(historyIdMap[type]).textContent = displayHistory;
-    }
-
     function stepGraph(type) {
       const graph = graphs[type];
       const chain = getOrderChain(type);
       const options = chain[graph.current] || Object.keys(chain);
+
       graph.current = options[Math.floor(Math.random() * options.length)];
 
       const pos = graph.positions[graph.current];
@@ -1170,6 +1258,7 @@
       }
 
       graph.history.push(graph.current);
+
       while (graph.history.length > getHistoryLimit()) {
         graph.history.shift();
       }
@@ -1178,180 +1267,145 @@
     }
 
     function stepAll() {
-      if (document.querySelector('[data-inst="melody"]').classList.contains('active')) stepGraph('melody');
-      if (document.querySelector('[data-inst="bass"]').classList.contains('active')) stepGraph('bass');
-      if (document.querySelector('[data-inst="drums"]').classList.contains('active')) stepGraph('drums');
-      if (document.querySelector('[data-inst="chords"]').classList.contains('active')) stepGraph('chords');
+      INSTRUMENT_TYPES.forEach(type => {
+        if (isInstrumentActive(type)) {
+          stepGraph(type);
+        }
+      });
     }
 
     function redrawGraphs() {
-      createGraph('melody');
-      createGraph('bass');
-      createGraph('drums');
-      createGraph('chords');
-      updateHistory('melody');
-      updateHistory('bass');
-      updateHistory('drums');
-      updateHistory('chords');
+      INSTRUMENT_TYPES.forEach(createGraph);
+      updateAllHistories();
       syncSelectedCards();
-    }
-
-    function resetHistories() {
-      graphs.melody.history = [graphs.melody.current];
-      graphs.bass.history = [graphs.bass.current];
-      graphs.drums.history = [graphs.drums.current];
-      graphs.chords.history = [graphs.chords.current];
-      updateHistory('melody');
-      updateHistory('bass');
-      updateHistory('drums');
-      updateHistory('chords');
     }
 
     function getIntervalByControls() {
       const bpm = Number(bpmInput.value) || 150;
       const base = 60000 / bpm;
 
-      const orderFactor = selectedOrder === 1 ? 1.25 : selectedOrder === 2 ? 1 : 0.75;
+      const orderFactor =
+        selectedOrder === 1 ? 1.25 :
+        selectedOrder === 2 ? 1 :
+        0.75;
+
       const genreFactor =
         getCurrentGenre() === "Ambient" ? 1.3 :
         getCurrentGenre() === "House" ? 0.8 :
-        getCurrentGenre() === "Hip Hop" ? 1.05 : 0.92;
+        getCurrentGenre() === "Hip Hop" ? 1.05 :
+        0.92;
 
       return Math.max(160, (base * orderFactor * genreFactor) / 2);
     }
 
     function syncSelectedCards() {
-      document.querySelectorAll('.graph-card').forEach(card => card.classList.remove('selected'));
+      document.querySelectorAll(".graph-card").forEach(card => {
+        card.classList.remove("selected");
+      });
 
-      document.querySelectorAll('.instrument-btn').forEach(btn => {
-        const inst = btn.dataset.inst;
-        const card = document.getElementById(`card-${inst}`);
-        if (btn.classList.contains('active') && card) {
-          card.classList.add('selected');
+      INSTRUMENT_TYPES.forEach(type => {
+        const card = document.getElementById(`card-${type}`);
+        if (isInstrumentActive(type) && card) {
+          card.classList.add("selected");
         }
       });
     }
 
     function startPlayback() {
       if (isRunning) return;
+
       isRunning = true;
       clearInterval(intervalId);
       intervalId = setInterval(stepAll, getIntervalByControls());
+
       showMessage(
         mainMessage,
         `Started ${getCurrentGenre()} mode in ${getCurrentScale()} with Order ${selectedOrder}.`,
-        'success'
+        "success"
       );
     }
 
-    function stopPlayback() {
+    function stopPlayback(showStatus = true) {
       isRunning = false;
       clearInterval(intervalId);
       intervalId = null;
-      showMessage(mainMessage, 'Playback stopped.', 'success');
+
+      if (showStatus) {
+        showMessage(mainMessage, "Playback stopped.", "success");
+      }
     }
 
-    document.getElementById('startBtn').addEventListener('click', startPlayback);
-    document.getElementById('stopBtn').addEventListener('click', stopPlayback);
+    document.getElementById("startBtn").addEventListener("click", startPlayback);
+    document.getElementById("stopBtn").addEventListener("click", () => stopPlayback(true));
 
-    document.getElementById('resetBtn').addEventListener('click', () => {
-      stopPlayback();
-      graphs.melody.current = "Do";
-      graphs.bass.current = "Do";
-      graphs.drums.current = "Closed";
-      graphs.chords.current = "i";
-      redrawGraphs();
-      resetHistories();
-      showMessage(mainMessage, 'Workspace reset.', 'success');
+    document.getElementById("resetBtn").addEventListener("click", () => {
+      resetWorkspace();
+      showMessage(mainMessage, "Workspace reset.", "success");
     });
 
-    document.getElementById('saveBtn').addEventListener('click', () => {
+    document.getElementById("saveBtn").addEventListener("click", () => {
       showMessage(
         mainMessage,
         `Saved current state with ${getCurrentGenre()}, ${getCurrentScale()}, ${bpmInput.value} BPM, Order ${selectedOrder}.`,
-        'success'
+        "success"
       );
     });
 
-    document.getElementById('saveSessionBtn').addEventListener('click', () => {
-      showMessage(outputMessage, 'Session saved to your library.', 'success');
+    document.getElementById("saveSessionBtn").addEventListener("click", () => {
+      showMessage(outputMessage, "Session saved to your library.", "success");
     });
 
-    document.getElementById('downloadMidiBtn').addEventListener('click', () => {
-      showMessage(outputMessage, 'MIDI download prepared.', 'success');
+    document.getElementById("downloadMidiBtn").addEventListener("click", () => {
+      showMessage(outputMessage, "MIDI download prepared.", "success");
     });
 
-    document.getElementById('clearSessionBtn').addEventListener('click', () => {
-      stopPlayback();
-      graphs.melody.current = "Do";
-      graphs.bass.current = "Do";
-      graphs.drums.current = "Closed";
-      graphs.chords.current = "i";
-      graphs.melody.history = ["Do"];
-      graphs.bass.history = ["Do"];
-      graphs.drums.history = ["Closed"];
-      graphs.chords.history = ["i"];
-      redrawGraphs();
-      showMessage(outputMessage, 'Generated session cleared.', 'success');
+    document.getElementById("clearSessionBtn").addEventListener("click", () => {
+      resetWorkspace();
+      showMessage(outputMessage, "Generated session cleared.", "success");
     });
 
-    document.querySelectorAll('.markov-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.markov-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        selectedOrder = Number(btn.dataset.order);
-        stopPlayback();
+    document.querySelectorAll(".markov-btn").forEach(button => {
+      button.addEventListener("click", () => {
+        document.querySelectorAll(".markov-btn").forEach(btn => btn.classList.remove("active"));
+        button.classList.add("active");
+
+        selectedOrder = Number(button.dataset.order);
+        stopPlayback(false);
         redrawGraphs();
-        resetHistories();
-        showMessage(mainMessage, `Markov Order changed to ${selectedOrder}.`, 'success');
+        resetHistoriesFromCurrent();
+
+        showMessage(mainMessage, `Markov Order changed to ${selectedOrder}.`, "success");
       });
     });
 
-    document.querySelectorAll('.instrument-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        btn.classList.toggle('active');
+    document.querySelectorAll(".instrument-btn").forEach(button => {
+      button.addEventListener("click", () => {
+        button.classList.toggle("active");
         syncSelectedCards();
       });
     });
 
-    genreSelect.addEventListener('change', () => {
-      stopPlayback();
-      graphs.melody.current = "Do";
-      graphs.bass.current = "Do";
-      graphs.drums.current = "Closed";
-      graphs.chords.current = "i";
-      redrawGraphs();
-      resetHistories();
-      showMessage(mainMessage, `Genre changed to ${getCurrentGenre()}. Graph behavior updated.`, 'success');
+    genreSelect.addEventListener("change", () => {
+      resetWorkspace();
+      showMessage(mainMessage, `Genre changed to ${getCurrentGenre()}. Graph behavior updated.`, "success");
     });
 
-    scaleSelect.addEventListener('change', () => {
-      stopPlayback();
+    scaleSelect.addEventListener("change", () => {
+      stopPlayback(false);
       redrawGraphs();
-      updateHistory('melody');
-      updateHistory('bass');
-      updateHistory('drums');
-      updateHistory('chords');
-      showMessage(mainMessage, `Scale changed to ${getCurrentScale()}. Node labels updated.`, 'success');
+      showMessage(mainMessage, `Scale changed to ${getCurrentScale()}. Node labels updated.`, "success");
     });
 
-    bpmInput.addEventListener('input', () => {
+    bpmInput.addEventListener("input", () => {
       if (isRunning) {
         clearInterval(intervalId);
         intervalId = setInterval(stepAll, getIntervalByControls());
       }
     });
 
-    noteLimitInput.addEventListener('input', () => {
-      ['melody','bass','drums','chords'].forEach(type => {
-        while (graphs[type].history.length > getHistoryLimit()) {
-          graphs[type].history.shift();
-        }
-        updateHistory(type);
-      });
-    });
+    noteLimitInput.addEventListener("input", trimHistoriesToLimit);
 
-    window.addEventListener('resize', redrawGraphs);
+    window.addEventListener("resize", redrawGraphs);
 
     redrawGraphs();
   </script>
