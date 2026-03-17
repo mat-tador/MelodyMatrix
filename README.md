@@ -6,7 +6,7 @@ CSCI 5300 Software Engineering Project
 ### Part one: Creating the device 
 In order to play a midi file you need a device which is able to do it. Linux does not have it so you can run in the backgroun `fluidsynth`. 
 ```
-udo apt-get update
+sudo apt-get update
 sudo apt-get install fluidsynth fluid-soundfont-gm
 fluidsynth -a pulseaudio -m alsa_seq -i /usr/share/sounds/sf2/FluidR3_GM.sf2
 ```
@@ -33,3 +33,12 @@ out.close_port()
 ### Part three: Playing chords 
 
 `MIDI_engine.py` plays the cords of wonderwall. 
+
+## MIDI Parser 
+
+The MIDI parser wants to extract the style of a music instrument from a MIDI file. For this reason the architecture will look like this: 
+1. Get MIDI files 
+2. Filter instrument 
+3. Generate Markov chains 
+
+To do this we will use the `mido` library. 
