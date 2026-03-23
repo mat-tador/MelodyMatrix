@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Melody Matrix — Settings</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    :root {
+      --line: #e7d9c6;
+      --text: #171717;
+      --muted: #666;
+      --accent: #c89b63;
+      --accent-dark: #a9783e;
+      --shadow: 0 12px 30px rgba(76, 48, 20, 0.08);
+      --success: #2a9d8f;
+      --danger: #e76f51;
+    }
+
+    body {
+      background:
+        radial-gradient(circle at top left, #fff6ee 0%, transparent 30%),
+        radial-gradient(circle at top right, #f9eadb 0%, transparent 28%),
+        linear-gradient(180deg, #fbf7f1 0%, #f3ebe0 100%);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Floating notes ── */
+    .music-notes {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    .music-notes span {
+      position: absolute;
+      bottom: -80px;
+      font-size: 34px;
+      font-weight: 700;
+      animation: floatNote linear infinite;
+      opacity: 0.22;
+      filter: drop-shadow(0 4px 10px rgba(0,0,0,0.08));
+    }
+
+    .music-notes span:nth-child(1)  { left:  6%; color: #f4a261; animation-duration: 13s;   animation-delay: 0s; }
+    .music-notes span:nth-child(2)  { left: 16%; color: #e76f51; animation-duration: 11s;   animation-delay: 2s; }
+    .music-notes span:nth-child(3)  { left: 29%; color: #2a9d8f; animation-duration: 14s;   animation-delay: 4s; }
+    .music-notes span:nth-child(4)  { left: 43%; color: #6a4c93; animation-duration: 12s;   animation-delay: 1s; }
+    .music-notes span:nth-child(5)  { left: 58%; color: #e9c46a; animation-duration: 15s;   animation-delay: 3s; }
+    .music-notes span:nth-child(6)  { left: 72%; color: #5ca8e6; animation-duration: 12.5s; animation-delay: 5s; }
+    .music-notes span:nth-child(7)  { left: 86%; color: #ff8fab; animation-duration: 13.5s; animation-delay: 6s; }
+    .music-notes span:nth-child(8)  { left: 94%; color: #b08968; animation-duration: 10.5s; animation-delay: 7s; }
+
+    @keyframes floatNote {
+      0%   { transform: translateY(0) rotate(0deg) scale(0.9); opacity: 0; }
+      12%  { opacity: 0.22; }
+      75%  { opacity: 0.14; }
+      100% { transform: translateY(-115vh) rotate(360deg) scale(1.08); opacity: 0; }
+    }
+
+    /* ── Layout ── */
+    .app {
+      display: grid;
+      grid-template-columns: 245px 1fr;
+      min-height: 100vh;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      background: rgba(255, 255, 255, 0.62);
+      backdrop-filter: blur(10px);
+      border-right: 1px solid var(--line);
+      padding: 22px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+    }
+
+    .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; }
+
+    .brand-icon {
+      width: 52px; height: 52px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, #f0d8b7, #c89b63);
+      color: white;
+      display: grid;
+      place-items: center;
+      font-size: 25px;
+      font-weight: 700;
+      box-shadow: var(--shadow);
+      flex-shrink: 0;
+    }
+
+    .brand h2 { font-size: 20px; font-weight: 700; line-height: 1.1; }
+    .brand p  { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+    .section-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: #8b7d6a;
+      margin: 8px 8px 4px;
+    }
+
+    .nav { display: flex; flex-direction: column; gap: 10px; }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      text-decoration: none;
+      color: #3a332b;
+      padding: 14px;
+      border-radius: 18px;
+      font-weight: 500;
+      transition: .22s ease;
+    }
+
+    .nav-item:hover { background: #f8efe3; transform: translateX(2px); }
+
+    .nav-item.active {
+      background: linear-gradient(180deg, #efe0cc 0%, #e8d7c0 100%);
+      box-shadow: inset 0 0 0 1px #dcc3a1;
+    }
+
+    .nav-icon {
+      width: 40px; height: 40px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      background: #fffaf4;
+      border: 1px solid var(--line);
+      flex-shrink: 0;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+    }
+
+    /* ── Main ── */
+    .main { padding: 22px; width: 100%; }
+
+    .topbar { margin-bottom: 18px; }
+    .topbar h1 { font-size: 31px; font-weight: 700; margin-bottom: 4px; letter-spacing: -.4px; }
+    .topbar p  { color: var(--muted); font-size: 14px; }
+
+    /* ── Cards ── */
+    .card {
+      background: rgba(255, 255, 255, .92);
+      border: 1px solid var(--line);
+      border-radius: 26px;
+      padding: 22px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
+      overflow: hidden;
+      margin-bottom: 18px;
+      width: 100%;
+    }
+
+    .card-head { margin-bottom: 16px; }
+    .card-head h3 { font-size: 21px; font-weight: 700; margin-bottom: 4px; }
+    .card-head p  { color: var(--muted); font-size: 13px; }
+
+    /* ── Settings grid ── */
+    .settings-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .field label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #4f4438;
+      margin-bottom: 7px;
+    }
+
+    .field .hint {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 5px;
+    }
+
+    .input, .select {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fffdfb;
+      font-size: 14px;
+      outline: none;
+      transition: .2s ease;
+    }
+
+    .input:focus, .select:focus {
+      border-color: #d2b18a;
+      box-shadow: 0 0 0 3px rgba(200,155,99,0.12);
+    }
+
+    /* ── Toggle section ── */
+    .toggle-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .toggle-box {
+      background: #fffaf4;
+      border: 1px solid #ead9c1;
+      border-radius: 18px;
+      padding: 16px;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      transition: .2s ease;
+    }
+
+    .toggle-box:hover { box-shadow: 0 4px 12px rgba(0,0,0,.05); }
+
+    .toggle-box h4 { font-size: 15px; margin-bottom: 3px; }
+    .toggle-box p  { font-size: 12px; color: var(--muted); line-height: 1.55; }
+
+    /* ── Toggle switch ── */
+    .switch {
+      position: relative;
+      width: 54px;
+      height: 30px;
+      flex-shrink: 0;
+    }
+
+    .switch input { opacity: 0; width: 0; height: 0; }
+
+    .slider {
+      position: absolute;
+      inset: 0;
+      cursor: pointer;
+      background: #e9ded1;
+      border-radius: 999px;
+      transition: .2s ease;
+      border: 1px solid #e2cfb7;
+    }
+
+    .slider::before {
+      content: "";
+      position: absolute;
+      width: 22px;
+      height: 22px;
+      left: 4px;
+      top: 3px;
+      background: white;
+      border-radius: 50%;
+      transition: .2s ease;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.12);
+    }
+
+    .switch input:checked + .slider {
+      background: linear-gradient(180deg, var(--accent) 0%, var(--accent-dark) 100%);
+      border-color: var(--accent-dark);
+    }
+
+    .switch input:checked + .slider::before { transform: translateX(24px); }
+
+    /* ── Danger zone ── */
+    .danger-zone {
+      border: 1.5px solid rgba(231,111,81,.22);
+      border-radius: 18px;
+      padding: 16px;
+      background: rgba(231,111,81,.04);
+    }
+
+    .danger-zone h4 { font-size: 15px; font-weight: 700; color: var(--danger); margin-bottom: 4px; }
+    .danger-zone p  { font-size: 13px; color: var(--muted); margin-bottom: 12px; }
+
+    /* ── Buttons ── */
+    .actions { display: flex; gap: 12px; flex-wrap: wrap; }
+
+    .btn {
+      padding: 12px 18px;
+      border: none;
+      border-radius: 14px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: .22s ease;
+    }
+
+    .btn:hover { transform: translateY(-1px); }
+
+    .btn-primary {
+      background: linear-gradient(180deg, var(--accent) 0%, var(--accent-dark) 100%);
+      color: white;
+      box-shadow: 0 8px 18px rgba(169,120,62,0.2);
+    }
+
+    .btn-soft {
+      background: #f7ede0;
+      color: #6b5236;
+      border: 1px solid #ead4b9;
+    }
+
+    .btn-danger {
+      background: rgba(231,111,81,.1);
+      color: var(--danger);
+      border: 1px solid rgba(231,111,81,.22);
+    }
+
+    /* ── Status message ── */
+    .message {
+      display: none;
+      margin-top: 14px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      font-size: 13px;
+    }
+
+    .message.success {
+      display: block;
+      background: rgba(42,157,143,.1);
+      color: var(--success);
+      border: 1px solid rgba(42,157,143,.18);
+    }
+
+    .message.error {
+      display: block;
+      background: rgba(231,111,81,.1);
+      color: var(--danger);
+      border: 1px solid rgba(231,111,81,.18);
+    }
+
+    /* ── Storage info bar ── */
+    .storage-bar {
+      background: #fbf3e7;
+      border: 1px solid #ead4b9;
+      border-radius: 14px;
+      padding: 12px 16px;
+      font-size: 13px;
+      color: #6b5236;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .storage-bar strong { font-weight: 600; }
+
+    /* ── Responsive ── */
+    @media (max-width: 980px) {
+      .app { grid-template-columns: 1fr; }
+      .sidebar { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--line); }
+      .settings-grid, .toggle-grid { grid-template-columns: 1fr; }
+      .main { padding: 14px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="music-notes" id="musicNotes">
+    <span>♪</span><span>♫</span><span>♩</span><span>♪</span>
+    <span>♫</span><span>♩</span><span>♬</span><span>♭</span>
+  </div>
+
+  <div class="app">
+    <!-- ── Sidebar ── -->
+    <aside class="sidebar">
+      <div>
+        <div class="brand">
+          <div class="brand-icon">♫</div>
+          <div>
+            <h2>Melody Matrix</h2>
+            <p>Markov Music Generator</p>
+          </div>
+        </div>
+
+        <div class="section-title">Menu</div>
+        <nav class="nav">
+          <a class="nav-item" href="dashboard.html"><div class="nav-icon">🏠</div><span>Dashboard</span></a>
+          <a class="nav-item" href="generate.html"><div class="nav-icon">🎼</div><span>Generate</span></a>
+          <a class="nav-item" href="saved-outputs.html"><div class="nav-icon">💾</div><span>Saved Outputs</span></a>
+          <a class="nav-item active" href="settings.html"><div class="nav-icon">⚙️</div><span>Settings</span></a>
+        </nav>
+      </div>
+    </aside>
+
+    <!-- ── Main ── -->
+    <main class="main">
+      <div class="topbar">
+        <h1>Settings</h1>
+        <p>Adjust how Melody Matrix feels and behaves across all pages</p>
+      </div>
+
+      <!-- App Behavior -->
+      <section class="card">
+        <div class="card-head">
+          <h3>App Behavior</h3>
+          <p>These preferences affect session naming, auto-save, export format, and history limits</p>
+        </div>
+
+        <div class="settings-grid">
+          <div class="field">
+            <label for="sessionName">Default Session Name</label>
+            <input class="input" id="sessionName" type="text" placeholder="My Track Session">
+            <div class="hint">Used when saving sessions from the dashboard</div>
+          </div>
+
+          <div class="field">
+            <label for="autoSave">Auto Save Sessions</label>
+            <select class="select" id="autoSave">
+              <option value="on">Enabled</option>
+              <option value="off">Disabled</option>
+            </select>
+            <div class="hint">Automatically save a snapshot on every generate</div>
+          </div>
+
+          <div class="field">
+            <label for="fileFormat">Export Format</label>
+            <select class="select" id="fileFormat">
+              <option value="MIDI">MIDI</option>
+              <option value="JSON">JSON</option>
+              <option value="WAV">WAV (Future)</option>
+            </select>
+            <div class="hint">Format used when downloading from dashboard or library</div>
+          </div>
+
+          <div class="field">
+            <label for="historyLimit">Session History Limit</label>
+            <input class="input" id="historyLimit" type="number" min="1" max="100" value="10">
+            <div class="hint">Max sessions stored in Saved Outputs (1–100)</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Quick Toggles -->
+      <section class="card">
+        <div class="card-head">
+          <h3>Quick Toggles</h3>
+          <p>Visual and playback preferences — changes take effect immediately</p>
+        </div>
+
+        <div class="toggle-grid">
+          <div class="toggle-box">
+            <div>
+              <h4>Floating music notes</h4>
+              <p>Show animated note background on all pages</p>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="showFloatingNotes" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="toggle-box">
+            <div>
+              <h4>Auto-play preview</h4>
+              <p>Start playback automatically after generation</p>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="autoPlayPreview">
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="toggle-box">
+            <div>
+              <h4>Confirm before delete</h4>
+              <p>Show a confirmation dialog when deleting sessions</p>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="confirmDelete" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="toggle-box">
+            <div>
+              <h4>Show Markov order hints</h4>
+              <p>Display chain detail tooltips in the dashboard</p>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="showHints" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <!-- Storage info -->
+      <section class="card">
+        <div class="card-head">
+          <h3>Storage Overview</h3>
+          <p>Local storage used by Melody Matrix on this device</p>
+        </div>
+
+        <div class="storage-bar">
+          <div>
+            <strong id="storageCount">0 sessions</strong> saved ·
+            <span id="storageSize">0 KB</span> used
+          </div>
+          <span style="color:var(--muted);font-size:12px;">Data is stored locally in your browser</span>
+        </div>
+      </section>
+
+      <!-- Actions & Danger Zone -->
+      <section class="card">
+        <div class="card-head">
+          <h3>Save & Reset</h3>
+          <p>Apply your preferences or restore defaults</p>
+        </div>
+
+        <div class="actions" style="margin-bottom: 20px;">
+          <button class="btn btn-primary" id="saveSettingsBtn">Save Changes</button>
+          <button class="btn btn-soft"    id="resetSettingsBtn">Reset to Defaults</button>
+        </div>
+
+        <div class="message" id="settingsMessage"></div>
+
+        <hr style="border:none;border-top:1px solid var(--line);margin:20px 0;">
+
+        <div class="danger-zone">
+          <h4>⚠ Danger Zone</h4>
+          <p>These actions are permanent and cannot be undone.</p>
+          <div class="actions">
+            <button class="btn btn-danger" id="clearSavedBtn">Clear All Saved Sessions</button>
+            <button class="btn btn-danger" id="clearAllDataBtn">Clear All App Data</button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+<script>
+  const KEYS = {
+    SETTINGS: "melodyMatrixSettings",
+    SAVED:    "melodyMatrixSavedOutputs",
+    SOURCE:   "melodyMatrixGenerateSource"
+  };
+
+  const defaults = {
+    sessionName:       "",
+    autoSave:          "on",
+    fileFormat:        "MIDI",
+    historyLimit:      10,
+    showFloatingNotes: true,
+    autoPlayPreview:   false,
+    confirmDelete:     true,
+    showHints:         true
+  };
+
+  /* ── Elements ── */
+  const fields = {
+    sessionName:       document.getElementById("sessionName"),
+    autoSave:          document.getElementById("autoSave"),
+    fileFormat:        document.getElementById("fileFormat"),
+    historyLimit:      document.getElementById("historyLimit"),
+    showFloatingNotes: document.getElementById("showFloatingNotes"),
+    autoPlayPreview:   document.getElementById("autoPlayPreview"),
+    confirmDelete:     document.getElementById("confirmDelete"),
+    showHints:         document.getElementById("showHints")
+  };
+
+  const settingsMsg = document.getElementById("settingsMessage");
+  const notesLayer  = document.getElementById("musicNotes");
+
+  /* ── Helpers ── */
+  function showMsg(text, type = "success") {
+    settingsMsg.className = `message ${type}`;
+    settingsMsg.textContent = text;
+    setTimeout(() => { settingsMsg.className = "message"; settingsMsg.textContent = ""; }, 2800);
+  }
+
+  function getStored() {
+    return { ...defaults, ...JSON.parse(localStorage.getItem(KEYS.SETTINGS) || "{}") };
+  }
+
+  function applyToForm(s) {
+    fields.sessionName.value         = s.sessionName || "";
+    fields.autoSave.value            = s.autoSave    || "on";
+    fields.fileFormat.value          = s.fileFormat  || "MIDI";
+    fields.historyLimit.value        = s.historyLimit ?? 10;
+    fields.showFloatingNotes.checked = s.showFloatingNotes ?? true;
+    fields.autoPlayPreview.checked   = s.autoPlayPreview   ?? false;
+    fields.confirmDelete.checked     = s.confirmDelete     ?? true;
+    fields.showHints.checked         = s.showHints         ?? true;
+    notesLayer.style.display         = fields.showFloatingNotes.checked ? "block" : "none";
+  }
+
+  function readForm() {
+    return {
+      sessionName:       fields.sessionName.value.trim(),
+      autoSave:          fields.autoSave.value,
+      fileFormat:        fields.fileFormat.value,
+      historyLimit:      Math.max(1, Math.min(100, Number(fields.historyLimit.value) || 10)),
+      showFloatingNotes: fields.showFloatingNotes.checked,
+      autoPlayPreview:   fields.autoPlayPreview.checked,
+      confirmDelete:     fields.confirmDelete.checked,
+      showHints:         fields.showHints.checked
+    };
+  }
+
+  /* ── Storage info ── */
+  function updateStorageInfo() {
+    const sessions = JSON.parse(localStorage.getItem(KEYS.SAVED) || "[]");
+    document.getElementById("storageCount").textContent = `${sessions.length} session${sessions.length !== 1 ? "s" : ""}`;
+
+    // Rough size estimate
+    const bytes = new Blob([JSON.stringify(localStorage)]).size;
+    const kb    = (bytes / 1024).toFixed(1);
+    document.getElementById("storageSize").textContent = `${kb} KB`;
+  }
+
+  /* ── Save ── */
+  function save() {
+    const s = readForm();
+    localStorage.setItem(KEYS.SETTINGS, JSON.stringify(s));
+    applyToForm(s);
+    updateStorageInfo();
+    showMsg("✓ Settings saved — all pages will use these preferences.");
+  }
+
+  /* ── Reset ── */
+  function reset() {
+    localStorage.setItem(KEYS.SETTINGS, JSON.stringify(defaults));
+    applyToForm(defaults);
+    showMsg("Settings restored to defaults.");
+  }
+
+  /* ── Events ── */
+  document.getElementById("saveSettingsBtn").addEventListener("click", save);
+  document.getElementById("resetSettingsBtn").addEventListener("click", reset);
+
+  // Live toggle for floating notes
+  fields.showFloatingNotes.addEventListener("change", () => {
+    notesLayer.style.display = fields.showFloatingNotes.checked ? "block" : "none";
+  });
+
+  // Clear saved sessions
+  document.getElementById("clearSavedBtn").addEventListener("click", () => {
+    const sessions = JSON.parse(localStorage.getItem(KEYS.SAVED) || "[]");
+    if (sessions.length === 0) { showMsg("No saved sessions to clear.", "error"); return; }
+    if (confirm(`Delete all ${sessions.length} saved session${sessions.length !== 1 ? "s" : ""}? This cannot be undone.`)) {
+      localStorage.removeItem(KEYS.SAVED);
+      updateStorageInfo();
+      showMsg("All saved sessions cleared.");
+    }
+  });
+
+  // Clear all app data
+  document.getElementById("clearAllDataBtn").addEventListener("click", () => {
+    if (confirm("This will delete all settings, sessions, and source data. Are you sure?")) {
+      [KEYS.SETTINGS, KEYS.SAVED, KEYS.SOURCE].forEach(k => localStorage.removeItem(k));
+      applyToForm(defaults);
+      updateStorageInfo();
+      showMsg("All app data cleared. Starting fresh.");
+    }
+  });
+
+  /* ── Boot ── */
+  applyToForm(getStored());
+  updateStorageInfo();
+</script>
+</body>
+</html>

@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Melody Matrix — Saved Outputs</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    :root {
+      --line: #e7d9c6;
+      --text: #171717;
+      --muted: #666;
+      --accent: #c89b63;
+      --accent-dark: #a9783e;
+      --shadow: 0 12px 30px rgba(76, 48, 20, 0.08);
+      --success: #2a9d8f;
+      --danger: #d96c5f;
+    }
+
+    body {
+      background:
+        radial-gradient(circle at top left, #fff6ee 0%, transparent 30%),
+        radial-gradient(circle at top right, #f9eadb 0%, transparent 28%),
+        linear-gradient(180deg, #fbf7f1 0%, #f3ebe0 100%);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Floating notes ── */
+    .music-notes {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    .music-notes span {
+      position: absolute;
+      bottom: -80px;
+      font-size: 34px;
+      font-weight: 700;
+      animation: floatNote linear infinite;
+      opacity: 0.35;
+      filter: drop-shadow(0 4px 10px rgba(0,0,0,0.08));
+    }
+
+    .music-notes span:nth-child(1)  { left:  6%; color: #f4a261; animation-duration: 13s;   animation-delay: 0s; }
+    .music-notes span:nth-child(2)  { left: 16%; color: #e76f51; animation-duration: 11s;   animation-delay: 2s; }
+    .music-notes span:nth-child(3)  { left: 29%; color: #2a9d8f; animation-duration: 14s;   animation-delay: 4s; }
+    .music-notes span:nth-child(4)  { left: 43%; color: #6a4c93; animation-duration: 12s;   animation-delay: 1s; }
+    .music-notes span:nth-child(5)  { left: 58%; color: #e9c46a; animation-duration: 15s;   animation-delay: 3s; }
+    .music-notes span:nth-child(6)  { left: 72%; color: #5ca8e6; animation-duration: 12.5s; animation-delay: 5s; }
+    .music-notes span:nth-child(7)  { left: 86%; color: #ff8fab; animation-duration: 13.5s; animation-delay: 6s; }
+    .music-notes span:nth-child(8)  { left: 94%; color: #b08968; animation-duration: 10.5s; animation-delay: 7s; }
+
+    @keyframes floatNote {
+      0%   { transform: translateY(0) rotate(0deg) scale(0.9); opacity: 0; }
+      12%  { opacity: 0.38; }
+      75%  { opacity: 0.26; }
+      100% { transform: translateY(-115vh) rotate(360deg) scale(1.08); opacity: 0; }
+    }
+
+    /* ── Layout ── */
+    .app {
+      display: grid;
+      grid-template-columns: 245px 1fr;
+      min-height: 100vh;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      background: rgba(255, 255, 255, 0.62);
+      backdrop-filter: blur(10px);
+      border-right: 1px solid var(--line);
+      padding: 22px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+    }
+
+    .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; }
+
+    .brand-icon {
+      width: 52px; height: 52px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, #f0d8b7, #c89b63);
+      color: white;
+      display: grid;
+      place-items: center;
+      font-size: 25px;
+      font-weight: 700;
+      box-shadow: var(--shadow);
+      flex-shrink: 0;
+    }
+
+    .brand h2 { font-size: 20px; font-weight: 700; line-height: 1.1; }
+    .brand p  { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+    .section-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: #8b7d6a;
+      margin: 8px 8px 4px;
+    }
+
+    .nav { display: flex; flex-direction: column; gap: 10px; }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      text-decoration: none;
+      color: #3a332b;
+      padding: 14px;
+      border-radius: 18px;
+      font-weight: 500;
+      transition: .22s ease;
+    }
+
+    .nav-item:hover { background: #f8efe3; transform: translateX(2px); }
+
+    .nav-item.active {
+      background: linear-gradient(180deg, #efe0cc 0%, #e8d7c0 100%);
+      box-shadow: inset 0 0 0 1px #dcc3a1;
+    }
+
+    .nav-icon {
+      width: 40px; height: 40px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      background: #fffaf4;
+      border: 1px solid var(--line);
+      flex-shrink: 0;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+    }
+
+    /* ── Main ── */
+    .main { padding: 22px; width: 100%; }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .topbar h1 { font-size: 31px; font-weight: 700; margin-bottom: 4px; letter-spacing: -.4px; }
+    .topbar p  { color: var(--muted); font-size: 14px; }
+
+    .search {
+      width: 320px;
+      background: rgba(255, 255, 255, .88);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
+    }
+
+    .search input { width: 100%; border: none; outline: none; background: transparent; font-size: 14px; }
+
+    /* ── Toolbar ── */
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .left-tools { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+
+    .count-badge {
+      background: #fbf3e7;
+      border: 1px solid #ead4b9;
+      color: #6b5236;
+      padding: 10px 14px;
+      border-radius: 14px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    /* ── Filter chips ── */
+    .filters { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; }
+
+    .filter-chip {
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: white;
+      color: #5f5142;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: .2s ease;
+    }
+
+    .filter-chip:hover { transform: translateY(-1px); }
+
+    .filter-chip.active { background: #f7ede0; border-color: #ead4b9; }
+
+    /* ── Session grid ── */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    /* ── Session card ── */
+    .card {
+      background: rgba(255, 255, 255, .92);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      padding: 20px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
+    }
+
+    .card-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+
+    .card-title { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+
+    .card-meta {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .top-pills { display: flex; gap: 6px; flex-wrap: wrap; flex-shrink: 0; }
+
+    .pill {
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      background: #f0e8da;
+      color: #7a5e38;
+      border: 1px solid #e0ceaf;
+    }
+
+    .pill.favorite   { background: #fef3cd; color: #856404; border-color: #ffe69c; }
+    .pill.downloaded { background: #d1f0e8; color: #1a6b55; border-color: #9ee5cc; }
+
+    /* ── Sequence boxes ── */
+    .sequence-box {
+      background: linear-gradient(180deg, #fffaf4 0%, #fbf3e7 100%);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px 14px;
+      margin-bottom: 10px;
+    }
+
+    .sequence-box h4 { font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #5c4a30; }
+    .sequence-box p  { font-size: 13px; color: #5b5348; line-height: 1.65; word-break: break-word; }
+
+    /* ── Card actions ── */
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+
+    .btn {
+      padding: 9px 14px;
+      border: none;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: .2s ease;
+    }
+
+    .btn:hover { transform: translateY(-1px); }
+
+    .btn-primary {
+      background: linear-gradient(180deg, var(--accent) 0%, var(--accent-dark) 100%);
+      color: white;
+      box-shadow: 0 6px 14px rgba(169,120,62,0.18);
+    }
+
+    .btn-soft {
+      background: #f7ede0;
+      color: #6b5236;
+      border: 1px solid #ead4b9;
+    }
+
+    .btn-danger {
+      background: rgba(217,108,95,.1);
+      color: var(--danger);
+      border: 1px solid rgba(217,108,95,.22);
+    }
+
+    /* ── Export notification ── */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: rgba(42,157,143,.96);
+      color: white;
+      padding: 12px 18px;
+      border-radius: 14px;
+      font-size: 14px;
+      font-weight: 500;
+      box-shadow: 0 8px 24px rgba(0,0,0,.15);
+      z-index: 999;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: .3s ease;
+      pointer-events: none;
+    }
+
+    .toast.show { opacity: 1; transform: translateY(0); }
+
+    /* ── Empty state ── */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+    }
+
+    .empty-state h3 { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+    .empty-state p  { color: var(--muted); font-size: 14px; margin-bottom: 20px; }
+
+    .empty-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+    /* ── Responsive ── */
+    @media (max-width: 1100px) { .grid { grid-template-columns: 1fr; } }
+
+    @media (max-width: 980px) {
+      .app { grid-template-columns: 1fr; }
+      .sidebar { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--line); }
+      .topbar { flex-direction: column; align-items: stretch; }
+      .search { width: 100%; }
+    }
+
+    @media (max-width: 640px) { .main { padding: 14px; } }
+  </style>
+</head>
+<body>
+
+  <div class="music-notes" id="musicNotes">
+    <span>♪</span><span>♫</span><span>♩</span><span>♪</span>
+    <span>♫</span><span>♩</span><span>♬</span><span>♭</span>
+  </div>
+
+  <!-- Toast notification -->
+  <div class="toast" id="toast"></div>
+
+  <div class="app">
+    <!-- ── Sidebar ── -->
+    <aside class="sidebar">
+      <div>
+        <div class="brand">
+          <div class="brand-icon">♫</div>
+          <div>
+            <h2>Melody Matrix</h2>
+            <p>Markov Music Generator</p>
+          </div>
+        </div>
+
+        <div class="section-title">Menu</div>
+        <nav class="nav">
+          <a class="nav-item" href="dashboard.html"><div class="nav-icon">🏠</div><span>Dashboard</span></a>
+          <a class="nav-item" href="generate.html"><div class="nav-icon">🎼</div><span>Generate</span></a>
+          <a class="nav-item active" href="saved-outputs.html"><div class="nav-icon">💾</div><span>Saved Outputs</span></a>
+          <a class="nav-item" href="settings.html"><div class="nav-icon">⚙️</div><span>Settings</span></a>
+        </nav>
+      </div>
+    </aside>
+
+    <!-- ── Main ── -->
+    <main class="main">
+      <div class="topbar">
+        <div>
+          <h1>Saved Outputs</h1>
+          <p>Browse your saved sessions, revisit older ideas, and manage generated outputs</p>
+        </div>
+        <div class="search">
+          <span>🔍</span>
+          <input type="text" id="searchInput" placeholder="Search sessions…">
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <div class="left-tools">
+          <div class="count-badge" id="sessionCount">0 saved sessions</div>
+        </div>
+        <button class="btn btn-soft" id="clearAllBtn">Clear All</button>
+      </div>
+
+      <div class="filters">
+        <button class="filter-chip active" data-filter="all">All Sessions</button>
+        <button class="filter-chip" data-filter="recent">Recent</button>
+        <button class="filter-chip" data-filter="favorites">Favorites</button>
+        <button class="filter-chip" data-filter="downloaded">Downloaded</button>
+      </div>
+
+      <div id="contentArea"></div>
+    </main>
+  </div>
+
+<script>
+  const KEYS = {
+    SETTINGS: "melodyMatrixSettings",
+    SAVED:    "melodyMatrixSavedOutputs"
+  };
+
+  let currentFilter = "all";
+
+  /* ── Apply settings ── */
+  (function applySettings() {
+    const s = JSON.parse(localStorage.getItem(KEYS.SETTINGS) || "{}");
+    if (s.showFloatingNotes === false) document.getElementById("musicNotes").style.display = "none";
+  })();
+
+  /* ── Toast ── */
+  function showToast(msg) {
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    setTimeout(() => t.classList.remove("show"), 2600);
+  }
+
+  /* ── Storage helpers ── */
+  function getSessions()     { return JSON.parse(localStorage.getItem(KEYS.SAVED) || "[]"); }
+  function saveSessions(arr) { localStorage.setItem(KEYS.SAVED, JSON.stringify(arr)); }
+
+  function updateSession(id, patch) {
+    saveSessions(getSessions().map(s => s.id === id ? { ...s, ...patch } : s));
+    renderSessions();
+  }
+
+  /* ── Filters ── */
+  function filteredSessions() {
+    const all    = getSessions();
+    const query  = document.getElementById("searchInput").value.trim().toLowerCase();
+
+    return all.filter((s, idx) => {
+      const searchable = `${s.sessionName} ${s.genre} ${s.scale} ${s.melody} ${s.bass} ${s.drums} ${s.chords}`.toLowerCase();
+      const matchSearch = !query || searchable.includes(query);
+
+      let matchFilter = true;
+      if (currentFilter === "favorites")  matchFilter = !!s.favorite;
+      if (currentFilter === "downloaded") matchFilter = !!s.downloaded;
+      if (currentFilter === "recent")     matchFilter = idx < 3;
+
+      return matchSearch && matchFilter;
+    });
+  }
+
+  /* ── Truncate long sequence text ── */
+  function shorten(text, max = 90) {
+    if (!text) return "—";
+    return text.length > max ? text.slice(0, max) + "…" : text;
+  }
+
+  /* ── Render ── */
+  function renderSessions() {
+    const contentArea = document.getElementById("contentArea");
+    const sessions    = filteredSessions();
+
+    const total = getSessions().length;
+    document.getElementById("sessionCount").textContent =
+      `${sessions.length} session${sessions.length !== 1 ? "s" : ""}${currentFilter !== "all" || document.getElementById("searchInput").value ? ` (of ${total})` : ""}`;
+
+    if (sessions.length === 0) {
+      const hasAny = getSessions().length > 0;
+      contentArea.innerHTML = `
+        <div class="empty-state">
+          <div style="font-size:48px;margin-bottom:16px;">${hasAny ? "🔍" : "🎼"}</div>
+          <h3>${hasAny ? "No matches found" : "Nothing saved yet"}</h3>
+          <p>${hasAny ? "Try a different filter or clear your search." : "Head to the dashboard, generate a track, and hit Save Session."}</p>
+          <div class="empty-actions">
+            <a href="dashboard.html"><button class="btn btn-primary">Go to Dashboard</button></a>
+            ${hasAny ? `<button class="btn btn-soft" onclick="resetView()">Show All</button>` : ""}
+          </div>
+        </div>`;
+      return;
+    }
+
+    contentArea.innerHTML = `
+      <div class="grid">
+        ${sessions.map(s => `
+          <div class="card" id="card-${s.id}">
+            <div class="card-head">
+              <div>
+                <div class="card-title">${s.sessionName}</div>
+                <div class="card-meta">
+                  ${s.genre} · ${s.scale} · ${s.bpm} BPM · Order ${s.order || "—"}<br>
+                  Saved ${s.createdAt}
+                </div>
+              </div>
+              <div class="top-pills">
+                ${s.favorite   ? `<div class="pill favorite">★ Fav</div>`   : ""}
+                ${s.downloaded ? `<div class="pill downloaded">↓ DL</div>` : ""}
+                <div class="pill">Saved</div>
+              </div>
+            </div>
+
+            <div class="sequence-box">
+              <h4>🎵 Melody</h4>
+              <p>${shorten(s.melody)}</p>
+            </div>
+            <div class="sequence-box">
+              <h4>🎸 Bass</h4>
+              <p>${shorten(s.bass)}</p>
+            </div>
+            <div class="sequence-box">
+              <h4>🥁 Drums</h4>
+              <p>${shorten(s.drums)}</p>
+            </div>
+            <div class="sequence-box">
+              <h4>🎹 Chords</h4>
+              <p>${shorten(s.chords)}</p>
+            </div>
+
+            <div class="actions">
+              <button class="btn btn-primary" onclick="exportSession(${s.id})">⬇ Export</button>
+              <button class="btn btn-soft"    onclick="toggleFavorite(${s.id})">
+                ${s.favorite ? "★ Unfavorite" : "☆ Favorite"}
+              </button>
+              <button class="btn btn-soft"    onclick="markDownloaded(${s.id})">
+                ${s.downloaded ? "✓ Downloaded" : "Mark DL'd"}
+              </button>
+              <button class="btn btn-danger"  onclick="deleteSession(${s.id})">✕ Delete</button>
+            </div>
+          </div>
+        `).join("")}
+      </div>`;
+  }
+
+  /* ── Actions ── */
+  window.toggleFavorite = function (id) {
+    const s = getSessions().find(x => x.id === id);
+    if (!s) return;
+    updateSession(id, { favorite: !s.favorite });
+    showToast(s.favorite ? "Removed from favorites." : "Added to favorites ★");
+  };
+
+  window.markDownloaded = function (id) {
+    const s = getSessions().find(x => x.id === id);
+    if (!s) return;
+    updateSession(id, { downloaded: true });
+    showToast("Marked as downloaded.");
+  };
+
+  window.deleteSession = function (id) {
+    saveSessions(getSessions().filter(s => s.id !== id));
+    renderSessions();
+    showToast("Session deleted.");
+  };
+
+  window.exportSession = function (id) {
+    const s = getSessions().find(x => x.id === id);
+    if (!s) return;
+
+    const content = [
+      `Melody Matrix Export`,
+      `Session: ${s.sessionName}`,
+      `Generated: ${s.createdAt}`,
+      `Genre: ${s.genre} | Scale: ${s.scale} | BPM: ${s.bpm} | Order: ${s.order || "—"}`,
+      ``,
+      `Melody: ${s.melody}`,
+      `Bass:   ${s.bass}`,
+      `Drums:  ${s.drums}`,
+      `Chords: ${s.chords}`
+    ].join("\n");
+
+    const blob = new Blob([content], { type: "text/plain" });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement("a");
+    a.href     = url;
+    a.download = `${s.sessionName.replace(/\s+/g, "-")}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    updateSession(id, { downloaded: true });
+    showToast(`"${s.sessionName}" exported.`);
+  };
+
+  function resetView() {
+    document.getElementById("searchInput").value = "";
+    currentFilter = "all";
+    document.querySelectorAll(".filter-chip").forEach(c => c.classList.toggle("active", c.dataset.filter === "all"));
+    renderSessions();
+  }
+
+  window.resetView = resetView;
+
+  /* ── Filter chips ── */
+  document.querySelectorAll(".filter-chip").forEach(chip => {
+    chip.addEventListener("click", () => {
+      currentFilter = chip.dataset.filter;
+      document.querySelectorAll(".filter-chip").forEach(c => c.classList.toggle("active", c.dataset.filter === currentFilter));
+      renderSessions();
+    });
+  });
+
+  /* ── Search ── */
+  document.getElementById("searchInput").addEventListener("input", renderSessions);
+
+  /* ── Clear all ── */
+  document.getElementById("clearAllBtn").addEventListener("click", () => {
+    if (getSessions().length === 0) return;
+    if (confirm("Clear all saved sessions? This can't be undone.")) {
+      localStorage.removeItem(KEYS.SAVED);
+      renderSessions();
+      showToast("All sessions cleared.");
+    }
+  });
+
+  /* ── Boot ── */
+  renderSessions();
+</script>
+</body>
+</html>
