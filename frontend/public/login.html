@@ -134,6 +134,17 @@ button.guest-btn:hover{
   font-size:13px;
 }
 
+.forgot-password{
+  margin-top:8px;
+  font-size:13px;
+}
+
+.forgot-password a{
+  color:black;
+  font-weight:500;
+  text-decoration:none;
+}
+
 .signup a{
   color:black;
   font-weight:500;
@@ -238,6 +249,9 @@ button.google-btn:hover{
   <div class="signup">
     Don't have an account? <a href="index.html">Sign Up</a>
   </div>
+  <div class="forgot-password">
+    <a href="reset-password.html">Forgot Password?</a>
+  </div>
 </div>
 
 <script>
@@ -265,6 +279,17 @@ window.addEventListener('load', function() {
   function clearMessages() {
     errorMessage.style.display = 'none';
     successMessage.style.display = 'none';
+  }
+
+  function isLikelyNewOAuthUser(user) {
+    if (!user) return false;
+    const createdAt = Date.parse(user.created_at || '');
+    const lastSignInAt = Date.parse(user.last_sign_in_at || '');
+    if (Number.isNaN(createdAt) || Number.isNaN(lastSignInAt)) return false;
+    const now = Date.now();
+    const createdRecently = Math.abs(now - createdAt) < 2 * 60 * 1000;
+    const firstSignInWindow = Math.abs(lastSignInAt - createdAt) < 2 * 60 * 1000;
+    return createdRecently && firstSignInWindow;
   }
 
   // Guest button should always work, even if Supabase/config is broken
@@ -303,6 +328,44 @@ window.addEventListener('load', function() {
     console.warn('Supabase not fully configured. Guest mode will still work.');
   }
 
+  // Handle OAuth callback before any manual login action.
+  (async function handleOAuthReturn() {
+    if (!supabaseClient) return;
+
+    const hasOAuthParams =
+      window.location.search.includes('code=') ||
+      window.location.search.includes('access_token=') ||
+      window.location.hash.includes('access_token=');
+
+    if (!hasOAuthParams) return;
+
+    const { data: sessionData, error } = await supabaseClient.auth.getSession();
+    if (error || !sessionData?.session?.user) return;
+
+    const user = sessionData.session.user;
+    const provider = user.app_metadata?.provider;
+
+    // Login page should only accept OAuth for already-registered users.
+    if (provider === 'google' && isLikelyNewOAuthUser(user)) {
+      await supabaseClient.auth.signOut();
+      localStorage.removeItem('user');
+      localStorage.removeItem('session');
+      localStorage.removeItem('isGuest');
+      showError('No linked account found for this Google email. Please create an account first.');
+      window.history.replaceState({}, document.title, 'login.html');
+      return;
+    }
+
+    localStorage.setItem('user', JSON.stringify(user));
+    localStorage.setItem('session', JSON.stringify(sessionData.session));
+    localStorage.removeItem('isGuest');
+    showSuccess('Login successful! Redirecting...');
+    window.history.replaceState({}, document.title, 'login.html');
+    setTimeout(() => {
+      window.location.href = 'dashboard.html';
+    }, 800);
+  })();
+
   googleLoginBtn.addEventListener('click', async () => {
     clearMessages();
 
@@ -315,7 +378,8 @@ window.addEventListener('load', function() {
       const { error } = await supabaseClient.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: new URL('dashboard.html', window.location.href).href
+          // OAuth login must pass through this page for existing-account checks.
+          redirectTo: new URL('login.html', window.location.href).href
         }
       });
 
@@ -347,6 +411,12 @@ window.addEventListener('load', function() {
 
       if (error) throw error;
 
+      if (!data?.user?.email_confirmed_at) {
+        await supabaseClient.auth.signOut();
+        showError('Please verify your email first, then log in.');
+        return;
+      }
+
       localStorage.setItem('user', JSON.stringify(data.user));
       localStorage.setItem('session', JSON.stringify(data.session));
       localStorage.removeItem('isGuest');
@@ -358,7 +428,12 @@ window.addEventListener('load', function() {
       }, 800);
 
     } catch (error) {
-      showError(error.message || 'Login failed.');
+      const message = error?.message || 'Login failed.';
+      if (message.toLowerCase().includes('email not confirmed')) {
+        showError('Please verify your email first, then log in.');
+        return;
+      }
+      showError(message);
     }
   });
 });
