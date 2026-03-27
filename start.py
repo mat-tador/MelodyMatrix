@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parent
 BACKEND_DIR = ROOT / "backend"
 FRONTEND_PUBLIC_DIR = ROOT / "frontend" / "public"
 
-BACKEND_FILE = BACKEND_DIR / "app.py"
+BACKEND_FILE = BACKEND_DIR / "main.py"
 LOGIN_FILE = FRONTEND_PUBLIC_DIR / "login.html"
 DASHBOARD_FILE = FRONTEND_PUBLIC_DIR / "dashboard.html"
 CONFIG_FILE = FRONTEND_PUBLIC_DIR / "config.js"
@@ -83,9 +83,9 @@ def start_backend():
         log(f"Backend already running on port {BACKEND_PORT}")
         return None
 
-    log("Starting Flask backend...")
+    log("Starting FastAPI backend...")
     process = subprocess.Popen(
-        ["python3", "app.py"],
+        ["python3", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", str(BACKEND_PORT)],
         cwd=BACKEND_DIR,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
@@ -93,7 +93,7 @@ def start_backend():
 
     if not wait_for_http(BACKEND_HEALTH_URL, timeout=20):
         process.terminate()
-        fail("Backend failed to start. Check backend/app.py.")
+        fail("Backend failed to start. Check backend/main.py.")
 
     log(f"Backend ready at http://127.0.0.1:{BACKEND_PORT}")
     return process
