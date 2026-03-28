@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Melody Matrix — Generate</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *{ margin:0; padding:0; box-sizing:border-box; font-family:'Poppins',sans-serif; }
+
+    :root{
+      --line:#e7d9c6; --text:#171717; --muted:#666;
+      --accent:#c89b63; --accent-dark:#a9783e;
+      --shadow:0 12px 30px rgba(76,48,20,0.08);
+      --success:#2a9d8f; --teal:#2a9d8f; --blue:#5ca8e6;
+      --purple:#6a4c93; --coral:#e76f51; --gold:#e9c46a;
+    }
+
+    body{
+      background:
+        radial-gradient(circle at top left,#fff6ee 0%,transparent 30%),
+        radial-gradient(circle at top right,#f9eadb 0%,transparent 28%),
+        linear-gradient(180deg,#fbf7f1 0%,#f3ebe0 100%);
+      color:var(--text); min-height:100vh; overflow-x:hidden; position:relative;
+    }
+
+    .music-notes{ position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden; }
+    .music-notes span{
+      position:absolute; bottom:-80px; font-size:34px; font-weight:700;
+      animation:floatNote linear infinite; opacity:0.35;
+      filter:drop-shadow(0 4px 10px rgba(0,0,0,0.08));
+    }
+    .music-notes span:nth-child(1){left:6%;color:#f4a261;animation-duration:13s;animation-delay:0s}
+    .music-notes span:nth-child(2){left:16%;color:#e76f51;animation-duration:11s;animation-delay:2s}
+    .music-notes span:nth-child(3){left:29%;color:#2a9d8f;animation-duration:14s;animation-delay:4s}
+    .music-notes span:nth-child(4){left:43%;color:#6a4c93;animation-duration:12s;animation-delay:1s}
+    .music-notes span:nth-child(5){left:58%;color:#e9c46a;animation-duration:15s;animation-delay:3s}
+    .music-notes span:nth-child(6){left:72%;color:#5ca8e6;animation-duration:12.5s;animation-delay:5s}
+    .music-notes span:nth-child(7){left:86%;color:#ff8fab;animation-duration:13.5s;animation-delay:6s}
+    .music-notes span:nth-child(8){left:94%;color:#b08968;animation-duration:10.5s;animation-delay:7s}
+
+    @keyframes floatNote{
+      0%{transform:translateY(0) rotate(0deg) scale(0.9);opacity:0}
+      12%{opacity:0.38}75%{opacity:0.26}
+      100%{transform:translateY(-115vh) rotate(360deg) scale(1.08);opacity:0}
+    }
+
+    .app{ display:grid; grid-template-columns:245px 1fr; min-height:100vh; position:relative; z-index:1; }
+
+    .sidebar{
+      background:rgba(255,255,255,0.62); backdrop-filter:blur(10px);
+      border-right:1px solid var(--line); padding:22px 16px;
+      display:flex; flex-direction:column; gap:22px;
+      box-shadow:inset -1px 0 0 rgba(255,255,255,0.35);
+    }
+    .brand{ display:flex; align-items:center; gap:12px; margin-bottom:4px; }
+    .brand-icon{
+      width:52px; height:52px; border-radius:18px;
+      background:linear-gradient(135deg,#f0d8b7,#c89b63);
+      color:white; display:grid; place-items:center;
+      font-size:25px; font-weight:700; box-shadow:var(--shadow);
+    }
+    .brand h2{ font-size:20px; font-weight:700; line-height:1.1; }
+    .brand p { font-size:12px; color:var(--muted); margin-top:2px; }
+    .section-title{ font-size:11px; text-transform:uppercase; letter-spacing:2px; color:#8b7d6a; margin:8px 8px 4px; }
+    .nav{ display:flex; flex-direction:column; gap:10px; }
+    .nav-item{
+      display:flex; align-items:center; gap:14px; text-decoration:none;
+      color:#3a332b; padding:14px; border-radius:18px; font-weight:500; transition:.22s ease;
+    }
+    .nav-item:hover{ background:#f8efe3; transform:translateX(2px); }
+    .nav-item.active{ background:linear-gradient(180deg,#efe0cc 0%,#e8d7c0 100%); box-shadow:inset 0 0 0 1px #dcc3a1; }
+    .nav-icon{
+      width:40px; height:40px; border-radius:14px; display:grid; place-items:center;
+      background:#fffaf4; border:1px solid var(--line); flex-shrink:0; box-shadow:0 4px 10px rgba(0,0,0,0.03);
+    }
+
+    .main{ padding:22px; width:100%; }
+    .topbar{ display:flex; justify-content:space-between; align-items:center; gap:14px; margin-bottom:18px; }
+    .topbar h1{ font-size:31px; font-weight:700; margin-bottom:4px; letter-spacing:-0.4px; }
+    .topbar p{ color:var(--muted); font-size:14px; }
+    .search{
+      width:300px; background:rgba(255,255,255,.88); border:1px solid var(--line);
+      border-radius:16px; padding:12px 14px; display:flex; align-items:center; gap:10px;
+      box-shadow:var(--shadow); backdrop-filter:blur(8px);
+    }
+    .search input{ width:100%; border:none; outline:none; background:transparent; font-size:14px; }
+
+    .card{
+      background:rgba(255,255,255,.92); border:1px solid var(--line);
+      border-radius:26px; padding:22px; box-shadow:var(--shadow);
+      backdrop-filter:blur(8px); overflow:hidden; margin-bottom:18px;
+    }
+    .card-head{ margin-bottom:16px; }
+    .card-head h3{ font-size:21px; font-weight:700; margin-bottom:4px; }
+    .card-head p{ color:var(--muted); font-size:13px; }
+
+    .mode-row{ display:flex; gap:12px; flex-wrap:wrap; margin-bottom:16px; }
+    .mode-chip{
+      padding:10px 16px; border-radius:14px; border:1px solid var(--line);
+      background:white; color:#4f4438; font-size:14px; font-weight:600; cursor:pointer; transition:.22s ease;
+    }
+    .mode-chip:hover{ transform:translateY(-1px); }
+    .mode-chip.active{
+      background:linear-gradient(180deg,var(--accent) 0%,var(--accent-dark) 100%);
+      color:white; border-color:var(--accent-dark); box-shadow:0 6px 14px rgba(169,120,62,0.2);
+    }
+
+    /* Source panels */
+    .source-panel{ display:none; }
+    .source-panel.visible{ display:block; }
+
+    /* Sample grid */
+    .sample-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:16px; }
+    .sample-card{
+      border:2px solid var(--line); border-radius:18px; padding:16px; cursor:pointer;
+      background:linear-gradient(135deg,#fffaf4,#f8efe3); transition:.22s ease; text-align:center;
+    }
+    .sample-card:hover{ transform:translateY(-2px); box-shadow:0 8px 20px rgba(0,0,0,0.08); }
+    .sample-card.chosen{
+      border-color:var(--accent-dark);
+      background:linear-gradient(135deg,#f0e4d0,#e8d5bc);
+      box-shadow:0 6px 16px rgba(169,120,62,0.22);
+    }
+    .sample-icon{ font-size:28px; margin-bottom:8px; }
+    .sample-name{ font-weight:700; font-size:14px; margin-bottom:4px; }
+    .sample-desc{ font-size:12px; color:var(--muted); line-height:1.5; }
+    .sample-tag{
+      display:inline-block; margin-top:6px; padding:3px 10px; border-radius:999px;
+      font-size:11px; font-weight:600; background:#f0e4d0; color:#7a5630;
+    }
+    .sample-card.chosen .sample-tag{ background:#c89b63; color:white; }
+
+    /* MIDI upload */
+    .upload-zone{
+      border:2.5px dashed #dcc3a1; border-radius:22px; padding:40px 24px;
+      text-align:center; background:linear-gradient(180deg,#fffaf4,#fbf3e7);
+      cursor:pointer; transition:.22s ease; position:relative;
+    }
+    .upload-zone:hover{ border-color:var(--accent); background:linear-gradient(180deg,#fff6ec,#faeadc); }
+    .upload-zone.has-file{ border-color:var(--teal); background:linear-gradient(135deg,#e8f8f4,#d4f0e8); }
+    .upload-zone input[type="file"]{ position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
+    .upload-icon{ font-size:44px; margin-bottom:12px; }
+    .upload-zone h4{ font-size:18px; font-weight:700; margin-bottom:6px; }
+    .upload-zone p{ color:var(--muted); font-size:13px; line-height:1.6; }
+    .upload-zone.has-file h4{ color:#1a6b55; }
+    .file-info{
+      margin-top:14px; padding:10px 14px; border-radius:12px;
+      background:rgba(42,157,143,0.1); border:1px solid rgba(42,157,143,0.2);
+      font-size:13px; color:#1a6b55; display:none;
+    }
+    .file-info.show{ display:block; }
+
+    /* Model grid */
+    .model-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-bottom:16px; }
+    .model-card{
+      border:2px solid var(--line); border-radius:18px; padding:16px; cursor:pointer;
+      background:linear-gradient(135deg,#f8f4ff,#ede5ff); transition:.22s ease;
+      display:flex; align-items:center; gap:14px;
+    }
+    .model-card:hover{ transform:translateY(-2px); box-shadow:0 8px 20px rgba(106,76,147,0.12); }
+    .model-card.chosen{ border-color:#6a4c93; box-shadow:0 6px 16px rgba(106,76,147,0.22); }
+    .model-icon{ font-size:32px; flex-shrink:0; }
+    .model-name{ font-weight:700; font-size:15px; margin-bottom:3px; color:#3d2471; }
+    .model-meta{ font-size:12px; color:#7a5cb0; }
+    .model-badge{
+      margin-left:auto; padding:3px 8px; border-radius:999px;
+      font-size:11px; font-weight:600; background:#e8deff; color:#6a4c93; flex-shrink:0;
+    }
+    .model-card.chosen .model-badge{ background:#6a4c93; color:white; }
+
+    /* Selected state banner */
+    .selection-banner{
+      display:none; padding:14px 16px; border-radius:16px; margin-bottom:16px;
+      background:linear-gradient(135deg,#e8f8f4,#d4f0e8);
+      border:1px solid rgba(42,157,143,0.3); font-size:14px; color:#1a6b55;
+      align-items:center; gap:10px;
+    }
+    .selection-banner.show{ display:flex; }
+    .selection-banner strong{ font-weight:700; }
+
+    .flow-info{
+      padding:14px 16px; border-radius:14px; background:#fbf3e7; border:1px solid #ead4b9;
+      font-size:13px; color:#6b5236; text-align:center; line-height:1.6; margin-top:4px;
+    }
+
+    .btn-row{ display:flex; gap:12px; flex-wrap:wrap; margin-top:16px; }
+    .btn{
+      padding:12px 20px; border:none; border-radius:14px;
+      font-size:14px; font-weight:600; cursor:pointer; transition:.22s ease;
+    }
+    .btn:hover{ transform:translateY(-1px); }
+    .btn-primary{ background:linear-gradient(180deg,var(--accent) 0%,var(--accent-dark) 100%); color:white; box-shadow:0 8px 18px rgba(169,120,62,0.2); }
+    .btn-teal   { background:linear-gradient(180deg,#2a9d8f 0%,#1f7a6e 100%); color:white; box-shadow:0 8px 18px rgba(42,157,143,0.25); }
+    .btn-soft   { background:#f7ede0; color:#6b5236; border:1px solid #ead4b9; }
+
+    .message{ display:none; padding:11px 13px; border-radius:12px; font-size:13px; margin-top:12px; }
+    .message.show{ display:block; background:rgba(42,157,143,.1); color:var(--success); border:1px solid rgba(42,157,143,.18); }
+    .message.error{ display:block; background:rgba(231,111,81,.1); color:#e76f51; border:1px solid rgba(231,111,81,.18); }
+
+    @media(max-width:980px){
+      .app{ grid-template-columns:1fr; }
+      .sidebar{ border-right:none; border-bottom:1px solid var(--line); }
+      .topbar{ flex-direction:column; align-items:stretch; }
+      .search{ width:100%; }
+      .sample-grid{ grid-template-columns:repeat(2,1fr); }
+      .model-grid{ grid-template-columns:1fr; }
+    }
+    @media(max-width:640px){
+      .main{ padding:14px; }
+      .sample-grid{ grid-template-columns:1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="music-notes">
+    <span>♪</span><span>♫</span><span>♩</span><span>♪</span>
+    <span>♫</span><span>♩</span><span>♬</span><span>♭</span>
+  </div>
+
+  <div class="app">
+    <aside class="sidebar">
+      <div>
+        <div class="brand">
+          <div class="brand-icon">♫</div>
+          <div><h2>Melody Matrix</h2><p>Markov Music Generator</p></div>
+        </div>
+        <div class="section-title">Menu</div>
+        <nav class="nav">
+          <a class="nav-item" href="dashboard.html"><div class="nav-icon">🏠</div><span>Dashboard</span></a>
+          <a class="nav-item active" href="generate.html"><div class="nav-icon">🎼</div><span>Generate</span></a>
+          <a class="nav-item" href="saved-outputs.html"><div class="nav-icon">💾</div><span>Saved Outputs</span></a>
+          <a class="nav-item" href="settings.html"><div class="nav-icon">⚙️</div><span>Settings</span></a>
+        </nav>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="topbar">
+        <div>
+          <h1>Generate Setup</h1>
+          <p>Pick your source, make a selection, then continue to the dashboard to generate your track</p>
+        </div>
+        <div class="search">
+          <span>🔍</span>
+          <input type="text" id="searchInput" placeholder="Search sample or model">
+        </div>
+      </div>
+
+      <section class="card">
+        <div class="card-head">
+          <h3>Input Source</h3>
+          <p>Choose the source you want to use for this session</p>
+        </div>
+
+        <!-- Mode tabs -->
+        <div class="mode-row">
+          <button class="mode-chip active" data-mode="sample">🎵 Use Sample Pattern</button>
+          <button class="mode-chip" data-mode="midi">📂 Upload MIDI File</button>
+          <button class="mode-chip" data-mode="trained">🎹 Use Trained Model</button>
+        </div>
+
+        <!-- Selection confirmation banner -->
+        <div class="selection-banner" id="selectionBanner">
+          <span id="selectionIcon">✓</span>
+          <span>Selected: <strong id="selectionLabel">—</strong></span>
+        </div>
+
+        <!-- Panel: Sample Pattern -->
+        <div class="source-panel visible" id="panel-sample">
+          <div class="sample-grid" id="sampleGrid">
+            <div class="sample-card" data-sample="Techno-Jazz Sample" data-genre="Techno-Jazz">
+              <div class="sample-icon">🎷</div>
+              <div class="sample-name">Techno-Jazz</div>
+              <div class="sample-desc">Complex chromatic movement with syncopated rhythms</div>
+              <span class="sample-tag">Chromatic · Complex</span>
+            </div>
+            <div class="sample-card" data-sample="Ambient Drift" data-genre="Ambient">
+              <div class="sample-icon">🌊</div>
+              <div class="sample-name">Ambient Drift</div>
+              <div class="sample-desc">Slow, evolving textures with long sustain patterns</div>
+              <span class="sample-tag">Slow · Textural</span>
+            </div>
+            <div class="sample-card" data-sample="House Beat" data-genre="House">
+              <div class="sample-icon">🏠</div>
+              <div class="sample-name">House Beat</div>
+              <div class="sample-desc">Driving four-on-the-floor pulse with uplifting chords</div>
+              <span class="sample-tag">Driving · Energetic</span>
+            </div>
+            <div class="sample-card" data-sample="Hip Hop Groove" data-genre="Hip Hop">
+              <div class="sample-icon">🎤</div>
+              <div class="sample-name">Hip Hop Groove</div>
+              <div class="sample-desc">Boom-bap swing with expressive melodic phrasing</div>
+              <span class="sample-tag">Swing · Expressive</span>
+            </div>
+            <div class="sample-card" data-sample="Minimal Loop" data-genre="Ambient">
+              <div class="sample-icon">🔁</div>
+              <div class="sample-name">Minimal Loop</div>
+              <div class="sample-desc">Stripped-back repetition for meditative focus</div>
+              <span class="sample-tag">Minimal · Meditative</span>
+            </div>
+            <div class="sample-card" data-sample="Club Pulse" data-genre="House">
+              <div class="sample-icon">💃</div>
+              <div class="sample-name">Club Pulse</div>
+              <div class="sample-desc">High-energy dance floor rhythm with tight hi-hats</div>
+              <span class="sample-tag">High-energy · Dance</span>
+            </div>
+          </div>
+          <div class="flow-info" id="sampleFlowInfo">Click a sample above to select it, then hit "Continue to Dashboard →"</div>
+        </div>
+
+        <!-- Panel: MIDI Upload -->
+        <div class="source-panel" id="panel-midi">
+          <div class="upload-zone" id="uploadZone">
+            <input type="file" id="midiFileInput" accept=".mid,.midi">
+            <div class="upload-icon">📂</div>
+            <h4 id="uploadTitle">Drop your MIDI file here</h4>
+            <p>or click to browse — supports .mid and .midi files</p>
+          </div>
+          <div class="file-info" id="fileInfo"></div>
+          <div class="flow-info" style="margin-top:14px;">Your uploaded MIDI's note and rhythm patterns will seed the dashboard generation.</div>
+        </div>
+
+        <!-- Panel: Trained Model -->
+        <div class="source-panel" id="panel-trained">
+          <div class="model-grid" id="modelGrid">
+            <div class="model-card" data-model="Jazz Model v2">
+              <div class="model-icon">🎷</div>
+              <div>
+                <div class="model-name">Jazz Model v2</div>
+                <div class="model-meta">Trained on 200+ jazz standards · High complexity</div>
+              </div>
+              <div class="model-badge">v2.0</div>
+            </div>
+            <div class="model-card" data-model="Ambient Model">
+              <div class="model-icon">🌙</div>
+              <div>
+                <div class="model-name">Ambient Model</div>
+                <div class="model-meta">Slow-transition chains · Minimal percussion</div>
+              </div>
+              <div class="model-badge">v1.3</div>
+            </div>
+            <div class="model-card" data-model="Club Model Pro">
+              <div class="model-icon">⚡</div>
+              <div>
+                <div class="model-name">Club Model Pro</div>
+                <div class="model-meta">House &amp; techno optimised · High BPM chains</div>
+              </div>
+              <div class="model-badge">v3.1</div>
+            </div>
+            <div class="model-card" data-model="Hip Hop Model">
+              <div class="model-icon">🎤</div>
+              <div>
+                <div class="model-name">Hip Hop Model</div>
+                <div class="model-meta">Boom-bap trained · Swing quantisation</div>
+              </div>
+              <div class="model-badge">v1.8</div>
+            </div>
+          </div>
+          <div class="flow-info">Select a trained model above — its Markov transition data will drive the dashboard.</div>
+        </div>
+
+        <!-- Action buttons -->
+        <div class="btn-row">
+          <button class="btn btn-teal" id="continueBtn" disabled style="opacity:.5;cursor:not-allowed;">
+            Continue to Dashboard →
+          </button>
+          <button class="btn btn-soft" id="clearBtn">Clear Selection</button>
+        </div>
+
+        <div class="message" id="pageMessage"></div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const APP_KEYS = { GENERATED:"melodyMatrixGenerateSource" };
+
+    let currentMode     = "sample";
+    let selectedLabel   = null;
+    let selectedGenre   = null;
+
+    const continueBtn      = document.getElementById("continueBtn");
+    const pageMessage      = document.getElementById("pageMessage");
+    const selectionBanner  = document.getElementById("selectionBanner");
+    const selectionLabel   = document.getElementById("selectionLabel");
+
+    /* ── Helpers ── */
+    function showMessage(text, type="show") {
+      pageMessage.textContent = text;
+      pageMessage.className   = `message ${type}`;
+      setTimeout(()=>{ pageMessage.className="message"; pageMessage.textContent=""; }, 2400);
+    }
+
+    function setSelection(label, genre) {
+      selectedLabel = label;
+      selectedGenre = genre || null;
+      selectionLabel.textContent  = label;
+      selectionBanner.classList.add("show");
+      continueBtn.disabled = false;
+      continueBtn.style.opacity = "1";
+      continueBtn.style.cursor  = "pointer";
+    }
+
+    function clearSelection() {
+      selectedLabel = null;
+      selectedGenre = null;
+      selectionBanner.classList.remove("show");
+      continueBtn.disabled = true;
+      continueBtn.style.opacity = ".5";
+      continueBtn.style.cursor  = "not-allowed";
+
+      document.querySelectorAll(".sample-card").forEach(c=>c.classList.remove("chosen"));
+      document.querySelectorAll(".model-card").forEach(c=>c.classList.remove("chosen"));
+      document.getElementById("uploadZone").classList.remove("has-file");
+      document.getElementById("uploadTitle").textContent = "Drop your MIDI file here";
+      document.getElementById("fileInfo").classList.remove("show");
+      document.getElementById("midiFileInput").value = "";
+    }
+
+    /* ── Mode switching ── */
+    document.querySelectorAll(".mode-chip").forEach(btn => {
+      btn.addEventListener("click", () => {
+        currentMode = btn.dataset.mode;
+        document.querySelectorAll(".mode-chip").forEach(b=>b.classList.remove("active"));
+        btn.classList.add("active");
+        document.querySelectorAll(".source-panel").forEach(p=>p.classList.remove("visible"));
+        document.getElementById(`panel-${currentMode}`).classList.add("visible");
+        clearSelection();
+      });
+    });
+
+    /* ── Sample selection ── */
+    function filterSamples(query) {
+      document.querySelectorAll(".sample-card").forEach(card => {
+        const text = `${card.dataset.sample} ${card.querySelector(".sample-desc").textContent}`.toLowerCase();
+        card.style.display = (!query || text.includes(query)) ? "" : "none";
+      });
+    }
+
+    document.querySelectorAll(".sample-card").forEach(card => {
+      card.addEventListener("click", () => {
+        document.querySelectorAll(".sample-card").forEach(c=>c.classList.remove("chosen"));
+        card.classList.add("chosen");
+        setSelection(card.dataset.sample, card.dataset.genre);
+        showMessage(`"${card.dataset.sample}" selected.`);
+      });
+    });
+
+    /* ── MIDI file upload ── */
+    const midiInput   = document.getElementById("midiFileInput");
+    const uploadZone  = document.getElementById("uploadZone");
+    const fileInfo    = document.getElementById("fileInfo");
+    const uploadTitle = document.getElementById("uploadTitle");
+
+    midiInput.addEventListener("change", () => {
+      const file = midiInput.files[0];
+      if (!file) return;
+
+      if (!file.name.match(/\.(mid|midi)$/i)) {
+        showMessage("Please upload a valid .mid or .midi file.", "error");
+        midiInput.value = "";
+        return;
+      }
+
+      uploadZone.classList.add("has-file");
+      uploadTitle.textContent = `✓ ${file.name}`;
+      fileInfo.textContent    = `File: ${file.name} · Size: ${(file.size/1024).toFixed(1)} KB`;
+      fileInfo.classList.add("show");
+      setSelection(`MIDI: ${file.name}`);
+      showMessage(`"${file.name}" loaded successfully.`);
+    });
+
+    uploadZone.addEventListener("dragover", e => { e.preventDefault(); uploadZone.style.borderColor = "var(--accent)"; });
+    uploadZone.addEventListener("dragleave", () => { uploadZone.style.borderColor = ""; });
+    uploadZone.addEventListener("drop", e => {
+      e.preventDefault(); uploadZone.style.borderColor = "";
+      const file = e.dataTransfer.files[0];
+      if (!file) return;
+      if (!file.name.match(/\.(mid|midi)$/i)) { showMessage("Please drop a .mid or .midi file.", "error"); return; }
+      const dt = new DataTransfer(); dt.items.add(file); midiInput.files = dt.files;
+      midiInput.dispatchEvent(new Event("change"));
+    });
+
+    /* ── Model selection ── */
+    document.querySelectorAll(".model-card").forEach(card => {
+      card.addEventListener("click", () => {
+        document.querySelectorAll(".model-card").forEach(c=>c.classList.remove("chosen"));
+        card.classList.add("chosen");
+        setSelection(card.dataset.model);
+        showMessage(`"${card.dataset.model}" selected.`);
+      });
+    });
+
+    /* ── Search filtering ── */
+    document.getElementById("searchInput").addEventListener("input", e => {
+      const query = e.target.value.trim().toLowerCase();
+      if (currentMode === "sample") filterSamples(query);
+    });
+
+    /* ── Clear button ── */
+    document.getElementById("clearBtn").addEventListener("click", () => {
+      clearSelection();
+      showMessage("Selection cleared.");
+    });
+
+    /* ── Continue to Dashboard ── */
+    continueBtn.addEventListener("click", () => {
+      if (!selectedLabel) { showMessage("Please make a selection first.", "error"); return; }
+      const payload = {
+        mode:          currentMode,
+        selectedLabel: selectedLabel,
+        selectedGenre: selectedGenre,
+        time:          new Date().toLocaleString()
+      };
+      localStorage.setItem(APP_KEYS.GENERATED, JSON.stringify(payload));
+      window.location.href = "dashboard.html";
+    });
+  </script>
+</body>
+</html>
