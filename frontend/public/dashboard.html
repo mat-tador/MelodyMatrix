@@ -389,7 +389,52 @@
     GEN_SOURCE: "melodyMatrixGenerateSource"
   };
 
-  /* Apply global settings */
+  /* =========================================================
+     BACKEND API BRIDGE
+     Base URL auto-detects: uses Flask when served via Python,
+     falls back to localStorage-only when opened as a file.
+  ========================================================= */
+  const API_BASE = (location.protocol === "file:" || location.hostname === "")
+    ? null
+    : (window.MELODY_API_BASE || "http://127.0.0.1:5001/api");
+
+  const api = {
+    async post(path, body) {
+      if (!API_BASE) return null;
+      try {
+        const res = await fetch(API_BASE + path, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body)
+        });
+        return await res.json();
+      } catch (e) { console.warn("[API]", path, e); return null; }
+    },
+    async get(path) {
+      if (!API_BASE) return null;
+      try {
+        const res = await fetch(API_BASE + path);
+        return await res.json();
+      } catch (e) { console.warn("[API]", path, e); return null; }
+    }
+  };
+
+  /* Ping Flask on load — shows backend status in console */
+  api.get("/health").then(r => {
+    if (r?.ok) console.info(`%c✓ Melody Matrix backend connected (v${r.version})`, "color:#2a9d8f;font-weight:bold");
+    else        console.info("%c⚡ Running in standalone (localStorage) mode", "color:#c89b63;font-weight:bold");
+  });
+
+  /* =========================================================
+     FIX: selectedOrder MUST be declared before the applySettings
+     IIFE below, otherwise assigning `selectedOrder = order`
+     inside the IIFE throws a ReferenceError and freezes the page.
+  ========================================================= */
+  let selectedOrder = 2;
+  let isRunning     = false;
+  let intervalId    = null;
+
+  /* Apply global settings — runs immediately on page load */
   (function applySettings() {
     const s = JSON.parse(localStorage.getItem(KEYS.SETTINGS) || "{}");
     if (s.showFloatingNotes === false) document.getElementById("musicNotes").style.display = "none";
@@ -397,6 +442,7 @@
     const genre = document.getElementById("genre");
     const scale = document.getElementById("scale");
     const bpm   = document.getElementById("bpm");
+    const noteLimit = document.getElementById("noteLimit");
 
     if (s.defaultGenre) {
       const opt = [...genre.options].find(o => o.value === s.defaultGenre);
@@ -406,7 +452,8 @@
       const opt = [...scale.options].find(o => o.value === s.defaultScale);
       if (opt) scale.value = s.defaultScale;
     }
-    if (s.defaultBpm) bpm.value = s.defaultBpm;
+    if (s.defaultBpm)       bpm.value = s.defaultBpm;
+    if (s.defaultNoteLimit) noteLimit.value = s.defaultNoteLimit;
     if (s.defaultOrder) {
       const order = Number(s.defaultOrder);
       document.querySelectorAll(".markov-btn").forEach(b => {
@@ -468,10 +515,6 @@
     "C Minor": { "Do":"Do","Re":"Re","Mib":"Mib","Fa":"Fa","Sol":"Sol","Sib":"Sib","Do_Alto":"Do_Alto","Pausa":"Pausa","Closed":"Closed","Open":"Open","PausaMelody":"Rest","i":"Cm","III":"Eb","iv":"Fm","v":"Gm","VI":"Ab","VII":"Bb" },
     "C Major": { "Do":"Do","Re":"Re","Mib":"Mi","Fa":"Fa","Sol":"Sol","Sib":"La","Do_Alto":"Ti","Pausa":"Pausa","Closed":"Closed","Open":"Open","PausaMelody":"Rest","i":"C","III":"Em","iv":"F","v":"G","VI":"Am","VII":"Bdim" }
   };
-
-  let selectedOrder = 2;
-  let isRunning     = false;
-  let intervalId    = null;
 
   const mainMessage    = document.getElementById("mainMessage");
   const outputMessage  = document.getElementById("outputMessage");
@@ -611,9 +654,47 @@
 
   function startPlayback() {
     if(isRunning) return;
-    isRunning=true; clearInterval(intervalId); intervalId=setInterval(stepAll,getInterval());
+    isRunning=true; clearInterval(intervalId);
+
+    if (API_BASE) {
+      intervalId = setInterval(async () => {
+        const currentStates = {};
+        INSTRUMENT_TYPES.forEach(t => { currentStates[t] = graphs[t].current; });
+        const res = await api.post("/step", {
+          genre: getCurrentGenre(),
+          scale: getCurrentScale(),
+          order: selectedOrder,
+          current: currentStates,
+          instruments: INSTRUMENT_TYPES.filter(isActive)
+        });
+        if (res?.ok) {
+          Object.entries(res.labels || {}).forEach(([type, label]) => {
+            document.getElementById(HISTORY_IDS[type]).textContent =
+              [...graphs[type].history.map(getLabel), label].slice(-getHistoryLimit()).join(" → ");
+          });
+
+          Object.entries(res.states || {}).forEach(([type, state]) => {
+            graphs[type].current = state;
+            const pos = graphs[type].positions[state];
+            if (graphs[type].walker && pos) {
+              graphs[type].walker.style.left = `${pos.x}px`;
+              graphs[type].walker.style.top  = `${pos.y}px`;
+            }
+            graphs[type].history.push(state);
+            while (graphs[type].history.length > getHistoryLimit()) graphs[type].history.shift();
+            updateHistory(type);
+          });
+        } else {
+          stepAll();
+        }
+      }, getInterval());
+    } else {
+      intervalId = setInterval(stepAll, getInterval());
+    }
+
     showMessage(mainMessage,`▶ Playing — ${getCurrentGenre()}, ${getCurrentScale()}, Order ${selectedOrder}`);
   }
+
   function stopPlayback(notify=true) {
     isRunning=false; clearInterval(intervalId); intervalId=null;
     if(notify) showMessage(mainMessage,"⏹ Playback stopped.");
@@ -630,7 +711,6 @@
     INSTRUMENT_TYPES.forEach(type=>{ if(isActive(type)) document.getElementById(`card-${type}`)?.classList.add("selected"); });
   }
 
-  /* Save session — writes to Saved Outputs */
   function saveSession() {
     const settings    = JSON.parse(localStorage.getItem(KEYS.SETTINGS)||"{}");
     const allSessions = JSON.parse(localStorage.getItem(KEYS.SAVED)||"[]");
@@ -653,6 +733,11 @@
     allSessions.unshift(session);
     while(allSessions.length>limit) allSessions.pop();
     localStorage.setItem(KEYS.SAVED,JSON.stringify(allSessions));
+
+    api.post("/sessions", session).then(r => {
+      if (r?.ok) console.info("[API] Session synced to backend:", r.session?.id);
+    });
+
     return session;
   }
 
@@ -720,7 +805,35 @@
     stopPlayback(false); redrawGraphs(); showMessage(mainMessage,`Scale changed to ${getCurrentScale()}.`);
   });
   bpmInput.addEventListener("input",()=>{
-    if(isRunning){ clearInterval(intervalId); intervalId=setInterval(stepAll,getInterval()); }
+    if(isRunning){
+      clearInterval(intervalId);
+      intervalId = API_BASE ? setInterval(async () => {
+        const currentStates = {};
+        INSTRUMENT_TYPES.forEach(t => { currentStates[t] = graphs[t].current; });
+        const res = await api.post("/step", {
+          genre: getCurrentGenre(),
+          scale: getCurrentScale(),
+          order: selectedOrder,
+          current: currentStates,
+          instruments: INSTRUMENT_TYPES.filter(isActive)
+        });
+        if (res?.ok) {
+          Object.entries(res.states || {}).forEach(([type, state]) => {
+            graphs[type].current = state;
+            const pos = graphs[type].positions[state];
+            if (graphs[type].walker && pos) {
+              graphs[type].walker.style.left = `${pos.x}px`;
+              graphs[type].walker.style.top  = `${pos.y}px`;
+            }
+            graphs[type].history.push(state);
+            while (graphs[type].history.length > getHistoryLimit()) graphs[type].history.shift();
+            updateHistory(type);
+          });
+        } else {
+          stepAll();
+        }
+      }, getInterval()) : setInterval(stepAll, getInterval());
+    }
   });
   noteLimitInput.addEventListener("input",()=>{
     const limit=getHistoryLimit();

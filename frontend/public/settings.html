@@ -380,6 +380,7 @@
         <div class="actions" style="margin-bottom:20px;">
           <button class="btn btn-primary" id="saveSettingsBtn">Save Changes</button>
           <button class="btn btn-soft"    id="resetSettingsBtn">Reset to Defaults</button>
+          <button class="btn btn-accent"  id="saveDefaultBtn" title="Saves current values as the permanent defaults restored by 'Reset to Defaults'">⭐ Save as Default</button>
         </div>
         <div class="message" id="settingsMessage"></div>
 
@@ -398,9 +399,41 @@
   </div>
 
 <script>
-  const KEYS = { SETTINGS:"melodyMatrixSettings", SAVED:"melodyMatrixSavedOutputs", SOURCE:"melodyMatrixGenerateSource" };
+  const KEYS = {
+    SETTINGS: "melodyMatrixSettings",
+    SAVED:    "melodyMatrixSavedOutputs",
+    SOURCE:   "melodyMatrixGenerateSource",
+    USER_DEFAULTS: "melodyMatrixUserDefaults"   // ← "Save as Default" target
+  };
 
-  const defaults = {
+  /* =========================================================
+     BACKEND API BRIDGE (same pattern as dashboard.html)
+  ========================================================= */
+  const API_BASE = (location.protocol === "file:" || location.hostname === "")
+    ? null
+    : (window.MELODY_API_BASE || "http://localhost:5000/api");
+
+  const api = {
+    async post(path, body) {
+      if (!API_BASE) return null;
+      try {
+        const res = await fetch(API_BASE + path, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body)
+        });
+        return await res.json();
+      } catch (e) { console.warn("[API settings]", path, e); return null; }
+    }
+  };
+
+  /* =========================================================
+     DEFAULTS
+     "defaults" = factory defaults (always the same).
+     "userDefaults" = whatever the user last hit ⭐ Save as Default on.
+     "Reset to Defaults" restores userDefaults if they exist, else factory defaults.
+  ========================================================= */
+  const FACTORY_DEFAULTS = {
     defaultGenre:       "Techno-Jazz",
     defaultScale:       "C Minor",
     defaultBpm:         150,
@@ -413,6 +446,11 @@
     autoSaveOnGenerate: false,
     compactView:        true
   };
+
+  function getEffectiveDefaults() {
+    const userDef = localStorage.getItem(KEYS.USER_DEFAULTS);
+    return userDef ? { ...FACTORY_DEFAULTS, ...JSON.parse(userDef) } : { ...FACTORY_DEFAULTS };
+  }
 
   const fields = {
     defaultGenre:       document.getElementById("defaultGenre"),
@@ -436,7 +474,9 @@
     setTimeout(()=>{ settingsMsg.className="message"; settingsMsg.textContent=""; }, 2800);
   }
 
-  function getStored() { return { ...defaults, ...JSON.parse(localStorage.getItem(KEYS.SETTINGS)||"{}") }; }
+  function getStored() {
+    return { ...FACTORY_DEFAULTS, ...JSON.parse(localStorage.getItem(KEYS.SETTINGS)||"{}") };
+  }
 
   function applyToForm(s) {
     fields.defaultGenre.value      = s.defaultGenre     || "Techno-Jazz";
@@ -485,12 +525,39 @@
     const s=readForm();
     localStorage.setItem(KEYS.SETTINGS,JSON.stringify(s));
     applyToForm(s); updateStorageInfo();
+    // Sync to backend (fire-and-forget)
+    api.post("/settings", s).then(r => {
+      if (r?.ok) console.info("[API] Settings synced to backend.");
+    });
     showMsg("✓ Settings saved — dashboard will use these defaults on next load.");
   }
 
   function reset() {
-    localStorage.setItem(KEYS.SETTINGS,JSON.stringify(defaults));
-    applyToForm(defaults); showMsg("Settings restored to defaults.");
+    const effectiveDef = getEffectiveDefaults();
+    localStorage.setItem(KEYS.SETTINGS, JSON.stringify(effectiveDef));
+    applyToForm(effectiveDef);
+    const hasUserDef = !!localStorage.getItem(KEYS.USER_DEFAULTS);
+    showMsg(hasUserDef
+      ? "Settings restored to your saved defaults (⭐)."
+      : "Settings restored to factory defaults.");
+  }
+
+  /* =========================================================
+     ⭐ SAVE AS DEFAULT — captures current form values as the
+     new baseline that "Reset to Defaults" will restore to.
+  ========================================================= */
+  function saveAsDefault() {
+    const s = readForm();
+    // Persist as the active settings too
+    localStorage.setItem(KEYS.SETTINGS, JSON.stringify(s));
+    // Also persist as the user's custom defaults
+    localStorage.setItem(KEYS.USER_DEFAULTS, JSON.stringify(s));
+    applyToForm(s); updateStorageInfo();
+    // Sync to backend
+    api.post("/settings", { ...s, _isDefault: true }).then(r => {
+      if (r?.ok) console.info("[API] Default settings synced to backend.");
+    });
+    showMsg("⭐ Saved as default — 'Reset to Defaults' will now restore these values.");
   }
 
   /* Order pill selection */
@@ -503,23 +570,37 @@
 
   document.getElementById("saveSettingsBtn").addEventListener("click", save);
   document.getElementById("resetSettingsBtn").addEventListener("click", reset);
+  document.getElementById("saveDefaultBtn").addEventListener("click", saveAsDefault);
 
   fields.showFloatingNotes.addEventListener("change",()=>{
     notesLayer.style.display=fields.showFloatingNotes.checked?"block":"none";
+  });
+
+  fields.historyLimit.addEventListener("input",()=>{
+    document.getElementById("historyVal").textContent = fields.historyLimit.value;
   });
 
   document.getElementById("clearSavedBtn").addEventListener("click",()=>{
     const sessions=JSON.parse(localStorage.getItem(KEYS.SAVED)||"[]");
     if(sessions.length===0){ showMsg("No saved sessions to clear.","error"); return; }
     if(confirm(`Delete all ${sessions.length} saved session${sessions.length!==1?"s":""}? This cannot be undone.`)){
-      localStorage.removeItem(KEYS.SAVED); updateStorageInfo(); showMsg("All saved sessions cleared.");
+      localStorage.removeItem(KEYS.SAVED);
+      // Also clear from backend
+      if (API_BASE) fetch(API_BASE+"/sessions",{method:"DELETE"}).catch(()=>{});
+      updateStorageInfo(); showMsg("All saved sessions cleared.");
     }
   });
 
   document.getElementById("clearAllDataBtn").addEventListener("click",()=>{
     if(confirm("This will delete all settings, sessions, and source data. Are you sure?")){
-      [KEYS.SETTINGS,KEYS.SAVED,KEYS.SOURCE].forEach(k=>localStorage.removeItem(k));
-      applyToForm(defaults); updateStorageInfo(); showMsg("All app data cleared. Starting fresh.");
+      [KEYS.SETTINGS,KEYS.SAVED,KEYS.SOURCE,KEYS.USER_DEFAULTS].forEach(k=>localStorage.removeItem(k));
+      // Reset backend too
+      if (API_BASE) {
+        fetch(API_BASE+"/settings/reset",{method:"POST"}).catch(()=>{});
+        fetch(API_BASE+"/sessions",{method:"DELETE"}).catch(()=>{});
+      }
+      applyToForm(FACTORY_DEFAULTS); updateStorageInfo();
+      showMsg("All app data cleared. Starting fresh.");
     }
   });
 
