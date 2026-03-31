@@ -237,10 +237,15 @@
   </style>
 </head>
 <body>
-
-  <div class="music-notes" id="musicNotes">
-    <span>♪</span><span>♫</span><span>♩</span><span>♪</span>
-    <span>♫</span><span>♩</span><span>♬</span><span>♭</span>
+  <div class="music-notes">
+    <span>♪</span>
+    <span>♫</span>
+    <span>♩</span>
+    <span>♪</span>
+    <span>♫</span>
+    <span>♩</span>
+    <span>♬</span>
+    <span>♭</span>
   </div>
 
   <div class="app">
@@ -252,10 +257,10 @@
         </div>
         <div class="section-title">Menu</div>
         <nav class="nav">
-          <a class="nav-item active" href="dashboard.html"><div class="nav-icon">🏠</div><span>Dashboard</span></a>
-          <a class="nav-item" href="generate.html"><div class="nav-icon">🎼</div><span>Generate</span></a>
-          <a class="nav-item" href="saved-outputs.html"><div class="nav-icon">💾</div><span>Saved Outputs</span></a>
-          <a class="nav-item" href="settings.html"><div class="nav-icon">⚙️</div><span>Settings</span></a>
+          <a class="nav-item active" href="#"><div class="nav-icon">🏠</div><span>Dashboard</span></a>
+          <a class="nav-item" href="#"><div class="nav-icon">🎼</div><span>Generate</span></a>
+          <a class="nav-item" href="#"><div class="nav-icon">💾</div><span>Saved Outputs</span></a>
+          <a class="nav-item" href="#"><div class="nav-icon">⚙️</div><span>Settings</span></a>
         </nav>
       </div>
       <div class="source-banner" id="sourceBanner" style="display:none;">
@@ -279,7 +284,6 @@
         </div>
       </div>
 
-      <!-- Generation Controls -->
       <section class="card">
         <div class="card-head">
           <h3>Generation Controls</h3>
@@ -295,6 +299,7 @@
               <option>Hip Hop</option>
             </select>
           </div>
+
           <div class="field">
             <label for="scale">Scale</label>
             <select id="scale" class="select">
@@ -302,10 +307,12 @@
               <option>C Major</option>
             </select>
           </div>
+
           <div class="field">
             <label for="bpm">Tempo (BPM)</label>
             <input id="bpm" class="input" type="number" min="60" max="220" value="150">
           </div>
+
           <div class="field">
             <label for="noteLimit">Note Limit</label>
             <input id="noteLimit" class="input" type="number" min="4" max="20" value="8">
@@ -336,12 +343,12 @@
         <div id="mainMessage" class="message"></div>
       </section>
 
-      <!-- Live Graphs -->
       <section class="card">
         <div class="card-head">
           <h3>Live Music Workspace</h3>
-          <p>Watch the Markov walker traverse the graph as your track generates in real time</p>
+          <p>Compare graph movement while switching genre, scale, BPM, note limit, and order</p>
         </div>
+
         <div class="graphs-grid">
           <div class="graph-card melody-active" id="card-melody">
             <div class="graph-title">🎵 Melody</div>
@@ -362,11 +369,10 @@
         </div>
       </section>
 
-      <!-- Generated Output -->
       <section class="card">
         <div class="card-head">
           <h3>Generated Music Output</h3>
-          <p>Your live sequence — save it to the library or download as MIDI</p>
+          <p>View the latest generated note, rhythm, and harmony patterns from the current session</p>
         </div>
         <div class="output-grid">
           <div class="output-box melody-box"><h4>🎵 Melody Sequence</h4><div class="output-text" id="melodyHistory">Do</div></div>
@@ -375,9 +381,9 @@
           <div class="output-box chords-box"><h4>🎹 Chord Sequence</h4><div class="output-text" id="chordsHistory">i</div></div>
         </div>
         <div class="session-actions">
-          <button class="btn btn-accent" id="saveSessionBtn">💾 Save Session</button>
-          <button class="btn btn-soft"   id="downloadMidiBtn">⬇ Download MIDI</button>
-          <button class="btn btn-soft"   id="clearSessionBtn">✕ Clear Session</button>
+          <button class="btn btn-accent" id="saveSessionBtn">Save Session</button>
+          <button class="btn btn-soft" id="downloadMidiBtn">Download MIDI</button>
+          <button class="btn btn-soft" id="clearSessionBtn">Clear Session</button>
         </div>
         <div id="outputMessage" class="message"></div>
       </section>
@@ -617,6 +623,119 @@
         line.setAttribute("stroke","#dccdb9"); line.setAttribute("stroke-width","2"); line.setAttribute("opacity","0.95");
         svg.appendChild(line);
       });
+
+      const walker = document.createElement("div");
+      walker.className = "walker";
+
+      const start = graph.positions[graph.current];
+      walker.style.left = `${start.x}px`;
+      walker.style.top = `${start.y}px`;
+
+      box.appendChild(walker);
+      graph.walker = walker;
+    }
+
+    function getHistoryLimit() {
+      return Math.max(4, Math.min(20, Number(noteLimitInput.value) || 8));
+    }
+
+    function stepGraph(type) {
+      const graph = graphs[type];
+      const chain = getOrderChain(type);
+      const options = chain[graph.current] || Object.keys(chain);
+
+      graph.current = options[Math.floor(Math.random() * options.length)];
+
+      const pos = graph.positions[graph.current];
+      if (graph.walker && pos) {
+        graph.walker.style.left = `${pos.x}px`;
+        graph.walker.style.top = `${pos.y}px`;
+      }
+
+      graph.history.push(graph.current);
+
+      while (graph.history.length > getHistoryLimit()) {
+        graph.history.shift();
+      }
+
+      updateHistory(type);
+    }
+
+    function stepAll() {
+      INSTRUMENT_TYPES.forEach(type => {
+        if (isInstrumentActive(type)) {
+          stepGraph(type);
+        }
+      });
+    }
+
+    function redrawGraphs() {
+      INSTRUMENT_TYPES.forEach(createGraph);
+      updateAllHistories();
+      syncSelectedCards();
+    }
+
+    function getIntervalByControls() {
+      const bpm = Number(bpmInput.value) || 150;
+      const base = 60000 / bpm;
+
+      const orderFactor =
+        selectedOrder === 1 ? 1.25 :
+        selectedOrder === 2 ? 1 :
+        0.75;
+
+      const genreFactor =
+        getCurrentGenre() === "Ambient" ? 1.3 :
+        getCurrentGenre() === "House" ? 0.8 :
+        getCurrentGenre() === "Hip Hop" ? 1.05 :
+        0.92;
+
+      return Math.max(160, (base * orderFactor * genreFactor) / 2);
+    }
+
+    function syncSelectedCards() {
+      document.querySelectorAll(".graph-card").forEach(card => {
+        card.classList.remove("selected");
+      });
+
+      INSTRUMENT_TYPES.forEach(type => {
+        const card = document.getElementById(`card-${type}`);
+        if (isInstrumentActive(type) && card) {
+          card.classList.add("selected");
+        }
+      });
+    }
+
+    function startPlayback() {
+      if (isRunning) return;
+
+      isRunning = true;
+      clearInterval(intervalId);
+      intervalId = setInterval(stepAll, getIntervalByControls());
+
+      showMessage(
+        mainMessage,
+        `Started ${getCurrentGenre()} mode in ${getCurrentScale()} with Order ${selectedOrder}.`,
+        "success"
+      );
+    }
+
+    function stopPlayback(showStatus = true) {
+      isRunning = false;
+      clearInterval(intervalId);
+      intervalId = null;
+
+      if (showStatus) {
+        showMessage(mainMessage, "Playback stopped.", "success");
+      }
+    }
+
+    document.getElementById("startBtn").addEventListener("click", startPlayback);
+    document.getElementById("stopBtn").addEventListener("click", () => stopPlayback(true));
+
+    document.getElementById("resetBtn").addEventListener("click", () => {
+      resetWorkspace();
+      showMessage(mainMessage, "Workspace reset.", "success");
     });
     box.appendChild(svg);
     nodes.forEach(node=>{
@@ -794,7 +913,6 @@
       INSTRUMENT_TYPES.forEach(t=>{ graphs[t].history=[graphs[t].current]; });
       updateAllHistories(); showMessage(mainMessage,`Markov Order set to ${selectedOrder}.`);
     });
-  });
 
   document.querySelectorAll(".instrument-btn").forEach(btn=>{
     btn.addEventListener("click",()=>{ btn.classList.toggle("active"); syncSelectedCards(); });
