@@ -328,29 +328,41 @@ window.addEventListener('load', function() {
     // Initialize Supabase with config from config.js
     const supabaseClient = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 
-    // Google signup handler
-    document.getElementById('googleSignupBtn').addEventListener('click', async () => {
+    function showError(message) {
         const errorMessage = document.getElementById('errorMessage');
         const successMessage = document.getElementById('successMessage');
-
-        errorMessage.style.display = 'none';
         successMessage.style.display = 'none';
+        errorMessage.textContent = message;
+        errorMessage.style.display = 'block';
+    }
+
+    function showSuccess(message) {
+        const errorMessage = document.getElementById('errorMessage');
+        const successMessage = document.getElementById('successMessage');
+        errorMessage.style.display = 'none';
+        successMessage.textContent = message;
+        successMessage.style.display = 'block';
+    }
+
+    // Google signup handler
+    document.getElementById('googleSignupBtn').addEventListener('click', async () => {
+        document.getElementById('errorMessage').style.display = 'none';
+        document.getElementById('successMessage').style.display = 'none';
 
         try {
             const { error } = await supabaseClient.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
-                    redirectTo: window.location.origin + '/dashboard.html' // Or a dedicated onboarding page
+                    // Route to login so verification + account checks happen before dashboard access
+                    redirectTo: new URL('login.html', window.location.href).href
                 }
             });
 
             if (error) throw error;
 
-            successMessage.textContent = 'Redirecting to Google...';
-            successMessage.style.display = 'block';
+            showSuccess('Redirecting to Google...');
         } catch (error) {
-            errorMessage.textContent = error.message || 'Google signup failed. Please try again.';
-            errorMessage.style.display = 'block';
+            showError(error.message || 'Google signup failed. Please try again.');
         }
     });
 
@@ -364,8 +376,6 @@ window.addEventListener('load', function() {
         const confirmPassword = document.getElementById('confirmPassword').value;
         const errorMessage = document.getElementById('errorMessage');
         const successMessage = document.getElementById('successMessage');
-        
-        // Hide previous messages
         errorMessage.style.display = 'none';
         successMessage.style.display = 'none';
         
@@ -395,10 +405,17 @@ window.addEventListener('load', function() {
             });
         
             if (error) throw error;
+
+            // Supabase can return a sanitized "success" for existing users.
+            // identities.length === 0 indicates an account already exists with this email.
+            const hasExistingAccount = data?.user && Array.isArray(data.user.identities) && data.user.identities.length === 0;
+            if (hasExistingAccount) {
+                showError('An account is already linked to this email. Please log in instead.');
+                return;
+            }
             
-            // Success - show success message
-            successMessage.textContent = 'Account created successfully! Please check your email to verify your account. Redirecting to login...';
-            successMessage.style.display = 'block';
+            // First-time account creation must be verified before login
+            showSuccess('Account created successfully. Verify your email first, then log in.');
             
             // Don't store session after signup - user needs to log in separately
             // Clear any existing session data
@@ -411,8 +428,12 @@ window.addEventListener('load', function() {
             }, 2000);
             
         } catch (error) {
-            errorMessage.textContent = error.message || 'Sign up failed. Please try again.';
-            errorMessage.style.display = 'block';
+            const message = error?.message || 'Sign up failed. Please try again.';
+            if (message.toLowerCase().includes('already registered') || message.toLowerCase().includes('already')) {
+                showError('An account is already linked to this email. Please log in instead.');
+                return;
+            }
+            showError(message);
         }
     });
 });
