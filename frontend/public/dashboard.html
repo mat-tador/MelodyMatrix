@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Melody Matrix Dashboard</title>
+  <link rel="stylesheet" href="chatbot.css" />
   <title>Melody Matrix — Dashboard</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
@@ -839,6 +841,46 @@
     const limit=getHistoryLimit();
     INSTRUMENT_TYPES.forEach(type=>{ while(graphs[type].history.length>limit) graphs[type].history.shift(); updateHistory(type); });
   });
+
+    noteLimitInput.addEventListener("input", trimHistoriesToLimit);
+
+    window.addEventListener("resize", redrawGraphs);
+
+    redrawGraphs();
+  </script>
+
+<button id="chat-toggle" class="chat-toggle">💬</button>
+
+<div id="chat-window" class="chat-window hidden">
+  <div class="chat-header">
+    <span>Melody Matrix Assistant</span>
+    <button id="chat-close" class="chat-close">✕</button>
+  </div>
+
+  <div id="chat-messages" class="chat-messages">
+    <div class="bot-message">
+      Hi! I can help with music theory and how Melody Matrix works.
+    </div>
+  </div>
+
+  <div class="chat-suggestions">
+    <button class="chat-suggestion-btn" data-question="What does Markov order do?">Markov order</button>
+    <button class="chat-suggestion-btn" data-question="What does BPM mean?">BPM</button>
+    <button class="chat-suggestion-btn" data-question="What is a major chord?">Major chord</button>
+    <button class="chat-suggestion-btn" data-question="What does download MIDI do?">Download MIDI</button>
+  </div>
+
+  <div class="chat-input-row">
+    <input
+      id="chat-input"
+      type="text"
+      placeholder="Ask about music or the dashboard..."
+    />
+    <button id="chat-send">Send</button>
+  </div>
+</div>
+
+<script src="chatbot.js"></script>
 
   window.addEventListener("resize", redrawGraphs);
   redrawGraphs();
