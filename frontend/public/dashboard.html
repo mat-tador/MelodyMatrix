@@ -4,28 +4,20 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Melody Matrix Dashboard</title>
+  <link rel="stylesheet" href="chatbot.css" />
+  <title>Melody Matrix — Dashboard</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    *{
-      margin:0;
-      padding:0;
-      box-sizing:border-box;
-      font-family:'Poppins',sans-serif;
-    }
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins',sans-serif; }
 
-    :root{
-      --bg:#f8f4ee;
-      --bg-soft:#f3ece2;
-      --panel:#fffdf9;
-      --panel-2:#fff8f0;
+    :root {
       --line:#e7d9c6;
       --text:#171717;
       --muted:#666;
       --accent:#c89b63;
       --accent-dark:#a9783e;
       --accent-light:#f1dfc7;
-      --shadow:0 12px 30px rgba(76, 48, 20, 0.08);
-
+      --shadow:0 12px 30px rgba(76,48,20,0.08);
       --melody:#5ca8e6;
       --bass:#9b72d6;
       --drums:#e5a84a;
@@ -33,536 +25,214 @@
       --active:#ef4444;
       --success:#2a9d8f;
       --danger:#e76f51;
+      --teal:#2a9d8f;
+      --purple:#6a4c93;
+      --coral:#e76f51;
+      --gold:#e9c46a;
     }
 
-    body{
+    body {
       background:
-        radial-gradient(circle at top left, #fff6ee 0%, transparent 30%),
-        radial-gradient(circle at top right, #f9eadb 0%, transparent 28%),
+        radial-gradient(circle at top left,#fff6ee 0%,transparent 30%),
+        radial-gradient(circle at top right,#f9eadb 0%,transparent 28%),
         linear-gradient(180deg,#fbf7f1 0%,#f3ebe0 100%);
       color:var(--text);
       min-height:100vh;
       overflow-x:hidden;
-      position:relative;
     }
 
-    .music-notes{
-      position:fixed;
-      inset:0;
-      pointer-events:none;
-      z-index:0;
-      overflow:hidden;
-    }
-
-    .music-notes span{
-      position:absolute;
-      bottom:-80px;
-      font-size:34px;
-      font-weight:700;
-      animation:floatNote linear infinite;
-      opacity:0.35;
+    .music-notes { position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden; }
+    .music-notes span {
+      position:absolute; bottom:-80px; font-size:34px; font-weight:700;
+      animation:floatNote linear infinite; opacity:0.35;
       filter:drop-shadow(0 4px 10px rgba(0,0,0,0.08));
     }
+    .music-notes span:nth-child(1){left:6%;color:#f4a261;animation-duration:13s;animation-delay:0s}
+    .music-notes span:nth-child(2){left:16%;color:#e76f51;animation-duration:11s;animation-delay:2s}
+    .music-notes span:nth-child(3){left:29%;color:#2a9d8f;animation-duration:14s;animation-delay:4s}
+    .music-notes span:nth-child(4){left:43%;color:#6a4c93;animation-duration:12s;animation-delay:1s}
+    .music-notes span:nth-child(5){left:58%;color:#e9c46a;animation-duration:15s;animation-delay:3s}
+    .music-notes span:nth-child(6){left:72%;color:#5ca8e6;animation-duration:12.5s;animation-delay:5s}
+    .music-notes span:nth-child(7){left:86%;color:#ff8fab;animation-duration:13.5s;animation-delay:6s}
+    .music-notes span:nth-child(8){left:94%;color:#b08968;animation-duration:10.5s;animation-delay:7s}
 
-    .music-notes span:nth-child(1){ left:6%; color:#f4a261; animation-duration:13s; animation-delay:0s; }
-    .music-notes span:nth-child(2){ left:16%; color:#e76f51; animation-duration:11s; animation-delay:2s; }
-    .music-notes span:nth-child(3){ left:29%; color:#2a9d8f; animation-duration:14s; animation-delay:4s; }
-    .music-notes span:nth-child(4){ left:43%; color:#6a4c93; animation-duration:12s; animation-delay:1s; }
-    .music-notes span:nth-child(5){ left:58%; color:#e9c46a; animation-duration:15s; animation-delay:3s; }
-    .music-notes span:nth-child(6){ left:72%; color:#5ca8e6; animation-duration:12.5s; animation-delay:5s; }
-    .music-notes span:nth-child(7){ left:86%; color:#ff8fab; animation-duration:13.5s; animation-delay:6s; }
-    .music-notes span:nth-child(8){ left:94%; color:#b08968; animation-duration:10.5s; animation-delay:7s; }
-
-    @keyframes floatNote{
-      0%{
-        transform:translateY(0) rotate(0deg) scale(0.9);
-        opacity:0;
-      }
-      12%{
-        opacity:0.38;
-      }
-      75%{
-        opacity:0.26;
-      }
-      100%{
-        transform:translateY(-115vh) rotate(360deg) scale(1.08);
-        opacity:0;
-      }
+    @keyframes floatNote {
+      0%{transform:translateY(0) rotate(0deg) scale(0.9);opacity:0}
+      12%{opacity:0.38}75%{opacity:0.26}
+      100%{transform:translateY(-115vh) rotate(360deg) scale(1.08);opacity:0}
     }
 
-    .app{
-      display:grid;
-      grid-template-columns:245px 1fr;
-      min-height:100vh;
-      position:relative;
-      z-index:1;
-    }
+    .app { display:grid; grid-template-columns:245px 1fr; min-height:100vh; position:relative; z-index:1; }
 
-    .sidebar{
-      background:rgba(255,255,255,0.62);
-      backdrop-filter:blur(10px);
-      border-right:1px solid var(--line);
-      padding:22px 16px;
-      display:flex;
-      flex-direction:column;
-      gap:22px;
-      box-shadow:inset -1px 0 0 rgba(255,255,255,0.35);
+    /* Sidebar */
+    .sidebar {
+      background:rgba(255,255,255,0.62); backdrop-filter:blur(10px);
+      border-right:1px solid var(--line); padding:22px 16px;
+      display:flex; flex-direction:column; gap:22px;
+      position:sticky; top:0; height:100vh; overflow-y:auto;
     }
-
-    .brand{
-      display:flex;
-      align-items:center;
-      gap:12px;
-      margin-bottom:4px;
-    }
-
-    .brand-icon{
-      width:52px;
-      height:52px;
-      border-radius:18px;
+    .brand { display:flex; align-items:center; gap:12px; margin-bottom:4px; }
+    .brand-icon {
+      width:52px; height:52px; border-radius:18px;
       background:linear-gradient(135deg,#f0d8b7,#c89b63);
-      color:white;
-      display:grid;
-      place-items:center;
-      font-size:25px;
-      font-weight:700;
-      box-shadow:var(--shadow);
+      color:white; display:grid; place-items:center;
+      font-size:25px; font-weight:700; box-shadow:var(--shadow); flex-shrink:0;
+    }
+    .brand h2 { font-size:20px; font-weight:700; line-height:1.1; }
+    .brand p  { font-size:12px; color:var(--muted); margin-top:2px; }
+    .section-title { font-size:11px; text-transform:uppercase; letter-spacing:2px; color:#8b7d6a; margin:8px 8px 4px; }
+    .nav { display:flex; flex-direction:column; gap:10px; }
+    .nav-item {
+      display:flex; align-items:center; gap:14px; text-decoration:none; color:#3a332b;
+      padding:14px; border-radius:18px; font-weight:500; transition:.22s ease;
+    }
+    .nav-item:hover { background:#f8efe3; transform:translateX(2px); }
+    .nav-item.active { background:linear-gradient(180deg,#efe0cc 0%,#e8d7c0 100%); box-shadow:inset 0 0 0 1px #dcc3a1; }
+    .nav-icon {
+      width:40px; height:40px; border-radius:14px; display:grid; place-items:center;
+      background:#fffaf4; border:1px solid var(--line); flex-shrink:0; box-shadow:0 4px 10px rgba(0,0,0,0.03);
     }
 
-    .brand h2{
-      font-size:20px;
-      font-weight:700;
-      line-height:1.1;
+    /* Source banner */
+    .source-banner {
+      background:linear-gradient(135deg,#e8f5fe,#d4eeff);
+      border:1px solid #a8d4f5; border-radius:16px; padding:12px 14px;
+      font-size:13px; color:#1a5c8a; display:flex; align-items:center; gap:8px;
+    }
+    .source-banner strong { font-weight:600; }
+
+    /* Main */
+    .main { padding:22px; }
+    .topbar { display:flex; justify-content:space-between; align-items:center; gap:14px; margin-bottom:18px; }
+    .topbar h1 { font-size:31px; font-weight:700; margin-bottom:4px; letter-spacing:-.4px; }
+    .topbar p  { color:var(--muted); font-size:14px; }
+    .search {
+      width:300px; background:rgba(255,255,255,.88); border:1px solid var(--line);
+      border-radius:16px; padding:12px 14px; display:flex; align-items:center; gap:10px;
+      box-shadow:var(--shadow); backdrop-filter:blur(8px);
+    }
+    .search input { width:100%; border:none; outline:none; background:transparent; font-size:14px; }
+
+    /* Cards */
+    .card {
+      background:rgba(255,255,255,.92); border:1px solid var(--line);
+      border-radius:26px; padding:20px; box-shadow:var(--shadow);
+      margin-bottom:18px; backdrop-filter:blur(8px); overflow:hidden;
+    }
+    .card-head { margin-bottom:16px; }
+    .card-head h3 { font-size:21px; font-weight:700; margin-bottom:4px; }
+    .card-head p  { color:var(--muted); font-size:13px; }
+
+    /* Controls */
+    .controls-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:14px; }
+    .field label { display:block; font-size:13px; font-weight:500; margin-bottom:6px; color:#4b4339; }
+    .input, .select {
+      width:100%; padding:12px 14px; border:1px solid var(--line);
+      border-radius:14px; background:#fffdfb; outline:none; font-size:14px; transition:.2s ease;
+    }
+    .input:focus,.select:focus { border-color:#d5b58f; box-shadow:0 0 0 3px rgba(201,169,125,0.12); }
+
+    .sub-row { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:14px; align-items:center; }
+    .sub-row-label { font-size:14px; }
+
+    .markov-btn, .instrument-btn {
+      cursor:pointer; transition:.22s ease; font-weight:600; font-size:14px;
+    }
+    .markov-btn {
+      padding:10px 16px; border-radius:12px; border:1px solid var(--line);
+      background:white; color:#4f4438;
+    }
+    .markov-btn:hover { transform:translateY(-1px); }
+    .markov-btn.active {
+      background:linear-gradient(180deg,var(--accent) 0%,var(--accent-dark) 100%);
+      color:white; border-color:var(--accent-dark); box-shadow:0 6px 14px rgba(169,120,62,0.2);
+    }
+    .instrument-btn {
+      padding:10px 14px; border-radius:12px; border:1px solid var(--line); background:white; color:#4f4438;
+    }
+    .instrument-btn:hover { transform:translateY(-1px); }
+    .instrument-btn[data-inst="melody"].active  { background:linear-gradient(180deg,#5ca8e6,#3a8ccf); color:white; border-color:#3a8ccf; box-shadow:0 6px 14px rgba(92,168,230,0.3); }
+    .instrument-btn[data-inst="bass"].active    { background:linear-gradient(180deg,#9b72d6,#7a52b5); color:white; border-color:#7a52b5; box-shadow:0 6px 14px rgba(155,114,214,0.3); }
+    .instrument-btn[data-inst="drums"].active   { background:linear-gradient(180deg,#e5a84a,#c88a28); color:white; border-color:#c88a28; box-shadow:0 6px 14px rgba(229,168,74,0.3); }
+    .instrument-btn[data-inst="chords"].active  { background:linear-gradient(180deg,#59b38a,#3d9270); color:white; border-color:#3d9270; box-shadow:0 6px 14px rgba(89,179,138,0.3); }
+
+    .btn-row { display:flex; gap:10px; flex-wrap:wrap; }
+    .btn { padding:12px 18px; border:none; border-radius:14px; font-size:14px; font-weight:600; cursor:pointer; transition:.22s ease; }
+    .btn:hover { transform:translateY(-1px); }
+    .btn-primary { background:linear-gradient(180deg,var(--accent) 0%,var(--accent-dark) 100%); color:white; box-shadow:0 8px 18px rgba(169,120,62,0.2); }
+    .btn-soft    { background:#f7ede0; color:#6b5236; border:1px solid #ead4b9; }
+    .btn-accent  { background:linear-gradient(180deg,#2a9d8f 0%,#1f7a6e 100%); color:white; box-shadow:0 8px 18px rgba(42,157,143,0.25); }
+    .btn-save    { background:linear-gradient(180deg,#6a4c93 0%,#4e3570 100%); color:white; box-shadow:0 8px 18px rgba(106,76,147,0.25); }
+    .btn-danger  { background:rgba(231,111,81,.12); color:var(--danger); border:1px solid rgba(231,111,81,.22); }
+
+    /* Graph grid */
+    .graphs-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }
+    .graph-card {
+      background:linear-gradient(180deg,#fffaf4 0%,#fbf3e7 100%);
+      border:1px solid var(--line); border-radius:22px; padding:14px;
+      transition:box-shadow .22s, border .22s, transform .22s;
+    }
+    .graph-card.melody-active  { border-top:3px solid var(--melody); }
+    .graph-card.bass-active    { border-top:3px solid var(--bass); }
+    .graph-card.drums-active   { border-top:3px solid var(--drums); }
+    .graph-card.chords-active  { border-top:3px solid var(--chords); }
+    .graph-card.selected { box-shadow:0 8px 20px rgba(0,0,0,0.1); transform:translateY(-2px); }
+    .graph-title { font-weight:700; margin-bottom:12px; font-size:16px; }
+    .graph-box {
+      position:relative; width:100%; height:280px; border-radius:18px;
+      background:linear-gradient(180deg,#ffffff 0%,#fff8f1 100%);
+      border:1px solid var(--line); overflow:hidden; box-shadow:inset 0 1px 0 rgba(255,255,255,0.6);
+    }
+    .graph-svg { position:absolute; inset:0; width:100%; height:100%; }
+    .node {
+      position:absolute; width:50px; height:50px; border-radius:50%;
+      display:flex; align-items:center; justify-content:center;
+      transform:translate(-50%,-50%); color:white; font-size:10px; font-weight:700;
+      text-align:center; padding:4px; z-index:2;
+      box-shadow:0 6px 14px rgba(0,0,0,.14); white-space:pre-line; line-height:1.1;
+    }
+    .walker {
+      position:absolute; width:18px; height:18px; border-radius:50%;
+      background:var(--active); border:3px solid white;
+      transform:translate(-50%,-50%); z-index:3;
+      box-shadow:0 0 14px rgba(239,68,68,.55); transition:all .28s ease;
     }
 
-    .brand p{
-      font-size:12px;
-      color:var(--muted);
-      margin-top:2px;
+    /* Output section */
+    .output-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:16px; margin-bottom:16px; }
+    .output-box {
+      border-radius:18px; padding:16px; border:1px solid transparent;
     }
+    .output-box.melody-box  { background:linear-gradient(135deg,#e8f4fd,#d4eaf8); border-color:#a8d0ef; }
+    .output-box.bass-box    { background:linear-gradient(135deg,#f0ebfa,#e5d8f5); border-color:#c4a8e8; }
+    .output-box.drums-box   { background:linear-gradient(135deg,#fef5e4,#fdebc8); border-color:#f0c87a; }
+    .output-box.chords-box  { background:linear-gradient(135deg,#e8f8f0,#d0f0e0); border-color:#90d8b0; }
+    .output-box h4 { font-size:15px; margin-bottom:8px; font-weight:700; }
+    .output-box.melody-box h4  { color:#1a5c8a; }
+    .output-box.bass-box h4    { color:#5a2d91; }
+    .output-box.drums-box h4   { color:#8a5a00; }
+    .output-box.chords-box h4  { color:#1a6b45; }
+    .output-text { min-height:50px; font-size:13px; color:#5b5348; line-height:1.7; word-break:break-word; }
 
-    .section-title{
-      font-size:11px;
-      text-transform:uppercase;
-      letter-spacing:2px;
-      color:#8b7d6a;
-      margin:8px 8px 4px;
+    .session-actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:6px; }
+
+    /* Messages */
+    .message { display:none; margin-top:12px; padding:11px 13px; border-radius:12px; font-size:13px; }
+    .message.success { display:block; background:rgba(42,157,143,.1); color:var(--success); border:1px solid rgba(42,157,143,.18); }
+    .message.error   { display:block; background:rgba(231,111,81,.1); color:var(--danger); border:1px solid rgba(231,111,81,.18); }
+
+    @media (max-width:1350px) { .graphs-grid { grid-template-columns:repeat(2,1fr); } }
+    @media (max-width:980px) {
+      .app { grid-template-columns:1fr; }
+      .sidebar { position:static; height:auto; border-right:none; border-bottom:1px solid var(--line); }
+      .controls-grid { grid-template-columns:repeat(2,1fr); }
+      .topbar { flex-direction:column; align-items:stretch; }
+      .search { width:100%; }
+      .output-grid { grid-template-columns:1fr; }
     }
-
-    .nav{
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-    }
-
-    .nav-item{
-      display:flex;
-      align-items:center;
-      gap:14px;
-      text-decoration:none;
-      color:#3a332b;
-      padding:14px 14px;
-      border-radius:18px;
-      font-weight:500;
-      transition:.22s ease;
-    }
-
-    .nav-item:hover{
-      background:#f8efe3;
-      transform:translateX(2px);
-    }
-
-    .nav-item.active{
-      background:linear-gradient(180deg,#efe0cc 0%,#e8d7c0 100%);
-      box-shadow:inset 0 0 0 1px #dcc3a1;
-    }
-
-    .nav-icon{
-      width:40px;
-      height:40px;
-      border-radius:14px;
-      display:grid;
-      place-items:center;
-      background:#fffaf4;
-      border:1px solid var(--line);
-      flex-shrink:0;
-      box-shadow:0 4px 10px rgba(0,0,0,0.03);
-    }
-
-    .main{
-      padding:22px;
-    }
-
-    .topbar{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:14px;
-      margin-bottom:18px;
-    }
-
-    .topbar h1{
-      font-size:31px;
-      font-weight:700;
-      margin-bottom:4px;
-      letter-spacing:-0.4px;
-    }
-
-    .topbar p{
-      color:var(--muted);
-      font-size:14px;
-    }
-
-    .search{
-      width:300px;
-      background:rgba(255,255,255,.88);
-      border:1px solid var(--line);
-      border-radius:16px;
-      padding:12px 14px;
-      display:flex;
-      align-items:center;
-      gap:10px;
-      box-shadow:var(--shadow);
-      backdrop-filter:blur(8px);
-    }
-
-    .search input{
-      width:100%;
-      border:none;
-      outline:none;
-      background:transparent;
-      font-size:14px;
-    }
-
-    .card{
-      background:rgba(255,255,255,.92);
-      border:1px solid var(--line);
-      border-radius:26px;
-      padding:20px;
-      box-shadow:var(--shadow);
-      margin-bottom:18px;
-      backdrop-filter:blur(8px);
-      overflow:hidden;
-    }
-
-    .card-head{
-      margin-bottom:16px;
-    }
-
-    .card-head h3{
-      font-size:21px;
-      font-weight:700;
-      margin-bottom:4px;
-    }
-
-    .card-head p{
-      color:var(--muted);
-      font-size:13px;
-    }
-
-    .controls-grid{
-      display:grid;
-      grid-template-columns:repeat(4,1fr);
-      gap:12px;
-      margin-bottom:14px;
-    }
-
-    .field label{
-      display:block;
-      font-size:13px;
-      font-weight:500;
-      margin-bottom:6px;
-      color:#4b4339;
-    }
-
-    .input,
-    .select{
-      width:100%;
-      padding:12px 14px;
-      border:1px solid var(--line);
-      border-radius:14px;
-      background:#fffdfb;
-      outline:none;
-      font-size:14px;
-      transition:.2s ease;
-    }
-
-    .input:focus,
-    .select:focus{
-      border-color:#d5b58f;
-      box-shadow:0 0 0 3px rgba(201,169,125,0.12);
-    }
-
-    .sub-row{
-      display:flex;
-      gap:12px;
-      flex-wrap:wrap;
-      margin-bottom:14px;
-      align-items:center;
-    }
-
-    .sub-row-label{
-      font-size:14px;
-    }
-
-    .markov-btn,
-    .instrument-btn,
-    .btn{
-      cursor:pointer;
-      transition:.22s ease;
-      font-weight:600;
-    }
-
-    .markov-btn{
-      padding:10px 16px;
-      border-radius:12px;
-      border:1px solid var(--line);
-      background:white;
-      color:#4f4438;
-    }
-
-    .markov-btn:hover{
-      transform:translateY(-1px);
-    }
-
-    .markov-btn.active{
-      background:linear-gradient(180deg,var(--accent) 0%, var(--accent-dark) 100%);
-      color:white;
-      border-color:var(--accent-dark);
-      box-shadow:0 6px 14px rgba(169,120,62,0.2);
-    }
-
-    .instrument-btn{
-      padding:10px 14px;
-      border-radius:12px;
-      border:1px solid var(--line);
-      background:white;
-      font-size:14px;
-      color:#4f4438;
-    }
-
-    .instrument-btn:hover{
-      transform:translateY(-1px);
-    }
-
-    .instrument-btn.active{
-      background:linear-gradient(180deg,var(--accent) 0%, var(--accent-dark) 100%);
-      color:white;
-      border-color:var(--accent-dark);
-      box-shadow:0 6px 14px rgba(169,120,62,0.2);
-    }
-
-    .btn-row{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-    }
-
-    .btn{
-      padding:12px 18px;
-      border:none;
-      border-radius:14px;
-      font-size:14px;
-    }
-
-    .btn:hover{
-      transform:translateY(-1px);
-    }
-
-    .btn-primary{
-      background:linear-gradient(180deg,var(--accent) 0%, var(--accent-dark) 100%);
-      color:white;
-      box-shadow:0 8px 18px rgba(169,120,62,0.2);
-    }
-
-    .btn-soft{
-      background:#f7ede0;
-      color:#6b5236;
-      border:1px solid #ead4b9;
-    }
-
-    .btn-accent{
-      background:linear-gradient(180deg,var(--accent) 0%, var(--accent-dark) 100%);
-      color:white;
-      box-shadow:0 8px 18px rgba(169,120,62,0.2);
-    }
-
-    .graphs-grid{
-      display:grid;
-      grid-template-columns:repeat(4,1fr);
-      gap:16px;
-    }
-
-    .graph-card{
-      background:linear-gradient(180deg,#fffaf4 0%, #fbf3e7 100%);
-      border:1px solid var(--line);
-      border-radius:22px;
-      padding:14px;
-      transition:box-shadow .22s ease, border .22s ease, transform .22s ease;
-    }
-
-    .graph-card.selected{
-      border:2px solid var(--accent-dark);
-      box-shadow:0 8px 20px rgba(169,120,62,0.18);
-      transform:translateY(-2px);
-    }
-
-    .graph-title{
-      font-weight:700;
-      margin-bottom:12px;
-      font-size:16px;
-    }
-
-    .graph-box{
-      position:relative;
-      width:100%;
-      height:280px;
-      border-radius:18px;
-      background:linear-gradient(180deg,#ffffff 0%, #fff8f1 100%);
-      border:1px solid var(--line);
-      overflow:hidden;
-      box-shadow:inset 0 1px 0 rgba(255,255,255,0.6);
-    }
-
-    .graph-svg{
-      position:absolute;
-      inset:0;
-      width:100%;
-      height:100%;
-    }
-
-    .node{
-      position:absolute;
-      width:50px;
-      height:50px;
-      border-radius:50%;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      transform:translate(-50%,-50%);
-      color:white;
-      font-size:10px;
-      font-weight:700;
-      text-align:center;
-      padding:4px;
-      z-index:2;
-      box-shadow:0 6px 14px rgba(0,0,0,.14);
-      white-space:pre-line;
-      line-height:1.1;
-    }
-
-    .walker{
-      position:absolute;
-      width:18px;
-      height:18px;
-      border-radius:50%;
-      background:var(--active);
-      border:3px solid white;
-      transform:translate(-50%,-50%);
-      z-index:3;
-      box-shadow:0 0 14px rgba(239,68,68,.55);
-      transition:all .28s ease;
-    }
-
-    .output-grid{
-      display:grid;
-      grid-template-columns:repeat(2,1fr);
-      gap:16px;
-      margin-bottom:16px;
-    }
-
-    .output-box{
-      background:linear-gradient(180deg,#fffaf4 0%, #fbf3e7 100%);
-      border:1px solid var(--line);
-      border-radius:18px;
-      padding:16px;
-    }
-
-    .output-box h4{
-      font-size:16px;
-      margin-bottom:10px;
-    }
-
-    .output-text{
-      min-height:66px;
-      font-size:14px;
-      color:#5b5348;
-      line-height:1.7;
-      word-break:break-word;
-    }
-
-    .session-actions{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      margin-top:6px;
-    }
-
-    .message{
-      display:none;
-      margin-top:12px;
-      padding:11px 13px;
-      border-radius:12px;
-      font-size:13px;
-    }
-
-    .message.success{
-      display:block;
-      background:rgba(42,157,143,.1);
-      color:var(--success);
-      border:1px solid rgba(42,157,143,.18);
-    }
-
-    .message.error{
-      display:block;
-      background:rgba(231,111,81,.1);
-      color:var(--danger);
-      border:1px solid rgba(231,111,81,.18);
-    }
-
-    @media (max-width: 1350px){
-      .graphs-grid{
-        grid-template-columns:repeat(2,1fr);
-      }
-    }
-
-    @media (max-width: 980px){
-      .app{
-        grid-template-columns:1fr;
-      }
-
-      .sidebar{
-        border-right:none;
-        border-bottom:1px solid var(--line);
-      }
-
-      .controls-grid{
-        grid-template-columns:repeat(2,1fr);
-      }
-
-      .topbar{
-        flex-direction:column;
-        align-items:stretch;
-      }
-
-      .search{
-        width:100%;
-      }
-
-      .output-grid{
-        grid-template-columns:1fr;
-      }
-    }
-
-    @media (max-width: 640px){
-      .controls-grid,
-      .graphs-grid{
-        grid-template-columns:1fr;
-      }
-
-      .main{
-        padding:14px;
-      }
+    @media (max-width:640px) {
+      .controls-grid,.graphs-grid { grid-template-columns:1fr; }
+      .main { padding:14px; }
     }
   </style>
 </head>
@@ -583,12 +253,8 @@
       <div>
         <div class="brand">
           <div class="brand-icon">♫</div>
-          <div>
-            <h2>Melody Matrix</h2>
-            <p>Markov Music Generator</p>
-          </div>
+          <div><h2>Melody Matrix</h2><p>Markov Music Generator</p></div>
         </div>
-
         <div class="section-title">Menu</div>
         <nav class="nav">
           <a class="nav-item active" href="#"><div class="nav-icon">🏠</div><span>Dashboard</span></a>
@@ -596,6 +262,13 @@
           <a class="nav-item" href="#"><div class="nav-icon">💾</div><span>Saved Outputs</span></a>
           <a class="nav-item" href="#"><div class="nav-icon">⚙️</div><span>Settings</span></a>
         </nav>
+      </div>
+      <div class="source-banner" id="sourceBanner" style="display:none;">
+        <span>🎵</span>
+        <div>
+          <strong id="sourceLabel">–</strong><br>
+          <small id="sourceTime" style="opacity:.75;font-size:11px;"></small>
+        </div>
       </div>
     </aside>
 
@@ -616,7 +289,6 @@
           <h3>Generation Controls</h3>
           <p>Genre, scale, BPM, note limit, and Markov order affect melody, bass, drums, and chords</p>
         </div>
-
         <div class="controls-grid">
           <div class="field">
             <label for="genre">Genre</label>
@@ -656,19 +328,18 @@
 
         <div class="sub-row">
           <strong class="sub-row-label">Instruments</strong>
-          <button class="instrument-btn active" data-inst="melody">Melody</button>
-          <button class="instrument-btn active" data-inst="bass">Bass</button>
-          <button class="instrument-btn active" data-inst="drums">Drums</button>
-          <button class="instrument-btn active" data-inst="chords">Chords</button>
+          <button class="instrument-btn active" data-inst="melody">🎵 Melody</button>
+          <button class="instrument-btn active" data-inst="bass">🎸 Bass</button>
+          <button class="instrument-btn active" data-inst="drums">🥁 Drums</button>
+          <button class="instrument-btn active" data-inst="chords">🎹 Chords</button>
         </div>
 
         <div class="btn-row">
           <button class="btn btn-primary" id="startBtn">▶ Start</button>
-          <button class="btn btn-soft" id="stopBtn">Stop</button>
-          <button class="btn btn-soft" id="resetBtn">Reset</button>
-          <button class="btn btn-accent" id="saveBtn">Save Output</button>
+          <button class="btn btn-soft"    id="stopBtn">⏹ Stop</button>
+          <button class="btn btn-soft"    id="resetBtn">↩ Reset</button>
+          <button class="btn btn-save"    id="saveBtn">💾 Save Output</button>
         </div>
-
         <div id="mainMessage" class="message"></div>
       </section>
 
@@ -679,23 +350,20 @@
         </div>
 
         <div class="graphs-grid">
-          <div class="graph-card" id="card-melody">
-            <div class="graph-title">Melody</div>
+          <div class="graph-card melody-active" id="card-melody">
+            <div class="graph-title">🎵 Melody</div>
             <div class="graph-box" id="graph-melody"></div>
           </div>
-
-          <div class="graph-card" id="card-bass">
-            <div class="graph-title">Bass</div>
+          <div class="graph-card bass-active" id="card-bass">
+            <div class="graph-title">🎸 Bass</div>
             <div class="graph-box" id="graph-bass"></div>
           </div>
-
-          <div class="graph-card" id="card-drums">
-            <div class="graph-title">Drums</div>
+          <div class="graph-card drums-active" id="card-drums">
+            <div class="graph-title">🥁 Drums</div>
             <div class="graph-box" id="graph-drums"></div>
           </div>
-
-          <div class="graph-card" id="card-chords">
-            <div class="graph-title">Chords</div>
+          <div class="graph-card chords-active" id="card-chords">
+            <div class="graph-title">🎹 Chords</div>
             <div class="graph-box" id="graph-chords"></div>
           </div>
         </div>
@@ -706,527 +374,254 @@
           <h3>Generated Music Output</h3>
           <p>View the latest generated note, rhythm, and harmony patterns from the current session</p>
         </div>
-
         <div class="output-grid">
-          <div class="output-box">
-            <h4>Melody Sequence</h4>
-            <div class="output-text" id="melodyHistory">Do</div>
-          </div>
-
-          <div class="output-box">
-            <h4>Bass Sequence</h4>
-            <div class="output-text" id="bassHistory">Do</div>
-          </div>
-
-          <div class="output-box">
-            <h4>Drum Sequence</h4>
-            <div class="output-text" id="drumHistory">Closed</div>
-          </div>
-
-          <div class="output-box">
-            <h4>Chord Sequence</h4>
-            <div class="output-text" id="chordsHistory">i</div>
-          </div>
+          <div class="output-box melody-box"><h4>🎵 Melody Sequence</h4><div class="output-text" id="melodyHistory">Do</div></div>
+          <div class="output-box bass-box"><h4>🎸 Bass Sequence</h4><div class="output-text" id="bassHistory">Do</div></div>
+          <div class="output-box drums-box"><h4>🥁 Drum Sequence</h4><div class="output-text" id="drumHistory">Closed</div></div>
+          <div class="output-box chords-box"><h4>🎹 Chord Sequence</h4><div class="output-text" id="chordsHistory">i</div></div>
         </div>
-
         <div class="session-actions">
           <button class="btn btn-accent" id="saveSessionBtn">Save Session</button>
           <button class="btn btn-soft" id="downloadMidiBtn">Download MIDI</button>
           <button class="btn btn-soft" id="clearSessionBtn">Clear Session</button>
         </div>
-
         <div id="outputMessage" class="message"></div>
       </section>
     </main>
   </div>
 
-  <script>
-    const DEFAULT_STATE = {
-      melody: "Do",
-      bass: "Do",
-      drums: "Closed",
-      chords: "i"
-    };
+<script>
+  const KEYS = {
+    SETTINGS:   "melodyMatrixSettings",
+    SAVED:      "melodyMatrixSavedOutputs",
+    GEN_SOURCE: "melodyMatrixGenerateSource"
+  };
 
-    const HISTORY_ELEMENT_IDS = {
-      melody: "melodyHistory",
-      bass: "bassHistory",
-      drums: "drumHistory",
-      chords: "chordsHistory"
-    };
+  /* =========================================================
+     BACKEND API BRIDGE
+     Base URL auto-detects: uses Flask when served via Python,
+     falls back to localStorage-only when opened as a file.
+  ========================================================= */
+  const API_BASE = (location.protocol === "file:" || location.hostname === "")
+    ? null
+    : (window.MELODY_API_BASE || "http://127.0.0.1:5001/api");
 
-    const INSTRUMENT_TYPES = ["melody", "bass", "drums", "chords"];
-
-    const baseChainsByGenre = {
-      "Techno-Jazz": {
-        melody: {
-          "Do": ["Mib", "Sol", "Fa"],
-          "Re": ["Do", "Mib"],
-          "Mib": ["Fa", "Sol", "Do"],
-          "Fa": ["Mib", "Sol"],
-          "Sol": ["Sib", "Do_Alto", "Fa"],
-          "Sib": ["Sol", "Do_Alto"],
-          "Do_Alto": ["Sib", "Sol"]
-        },
-        bass: {
-          "Do": ["Do", "Do", "Mib", "Pausa"],
-          "Mib": ["Fa", "Do"],
-          "Fa": ["Sol", "Do"],
-          "Sol": ["Do", "Do", "Sib"],
-          "Sib": ["Sol", "Do"],
-          "Pausa": ["Do", "Sol"]
-        },
-        drums: {
-          "Closed": ["Closed", "Open", "Pausa"],
-          "Open": ["Closed", "Pausa"],
-          "Pausa": ["Closed", "Open"]
-        },
-        chords: {
-          "i": ["iv", "v", "VI"],
-          "iv": ["i", "v"],
-          "v": ["i", "VII"],
-          "VI": ["iv", "VII"],
-          "VII": ["i", "v"]
-        }
-      },
-
-      "Ambient": {
-        melody: {
-          "Do": ["Fa", "Sol", "Mib"],
-          "Re": ["Do", "Fa"],
-          "Mib": ["Do", "Fa", "Sol"],
-          "Fa": ["Sol", "Do_Alto", "Mib"],
-          "Sol": ["Fa", "Do_Alto"],
-          "Sib": ["Fa", "Sol"],
-          "Do_Alto": ["Sol", "Fa", "Mib"]
-        },
-        bass: {
-          "Do": ["Pausa", "Mib", "Do"],
-          "Mib": ["Do", "Fa"],
-          "Fa": ["Pausa", "Sol"],
-          "Sol": ["Do", "Pausa"],
-          "Sib": ["Fa", "Do"],
-          "Pausa": ["Do", "Fa", "Sol"]
-        },
-        drums: {
-          "Closed": ["Pausa", "Closed", "Open"],
-          "Open": ["Pausa", "Closed"],
-          "Pausa": ["Closed", "Pausa", "Open"]
-        },
-        chords: {
-          "i": ["VI", "iv", "i"],
-          "iv": ["i", "VI"],
-          "v": ["i"],
-          "VI": ["i", "VII"],
-          "VII": ["i", "iv"]
-        }
-      },
-
-      "House": {
-        melody: {
-          "Do": ["Sol", "Fa", "Do_Alto"],
-          "Re": ["Fa", "Sol"],
-          "Mib": ["Sol", "Do"],
-          "Fa": ["Do", "Sol", "Do_Alto"],
-          "Sol": ["Do", "Fa", "Sib"],
-          "Sib": ["Do_Alto", "Sol"],
-          "Do_Alto": ["Sol", "Fa", "Do"]
-        },
-        bass: {
-          "Do": ["Do", "Sol", "Pausa"],
-          "Mib": ["Do", "Fa"],
-          "Fa": ["Sol", "Do"],
-          "Sol": ["Do", "Sol", "Sib"],
-          "Sib": ["Do", "Sol"],
-          "Pausa": ["Do", "Do", "Sol"]
-        },
-        drums: {
-          "Closed": ["Closed", "Closed", "Open"],
-          "Open": ["Closed", "Closed"],
-          "Pausa": ["Closed", "Open"]
-        },
-        chords: {
-          "i": ["VI", "III", "VII"],
-          "III": ["VI", "VII"],
-          "VI": ["i", "III"],
-          "VII": ["i", "VI"]
-        }
-      },
-
-      "Hip Hop": {
-        melody: {
-          "Do": ["Mib", "Fa", "Do"],
-          "Re": ["Do", "Fa"],
-          "Mib": ["Do", "Sol"],
-          "Fa": ["Do", "Mib", "PausaMelody"],
-          "Sol": ["Fa", "Mib", "Do"],
-          "Sib": ["Sol", "Fa"],
-          "Do_Alto": ["Sol", "Mib"]
-        },
-        bass: {
-          "Do": ["Do", "Pausa", "Mib"],
-          "Mib": ["Do", "Pausa"],
-          "Fa": ["Sol", "Do"],
-          "Sol": ["Do", "Pausa", "Sib"],
-          "Sib": ["Do", "Sol"],
-          "Pausa": ["Do", "Mib", "Sol"]
-        },
-        drums: {
-          "Closed": ["Closed", "Pausa", "Open"],
-          "Open": ["Closed", "Pausa"],
-          "Pausa": ["Closed", "Closed", "Open"]
-        },
-        chords: {
-          "i": ["VII", "VI", "i"],
-          "VI": ["i", "VII"],
-          "VII": ["i", "VI"],
-          "iv": ["i"]
-        }
-      }
-    };
-
-    const scaleMaps = {
-      "C Minor": {
-        "Do": "Do",
-        "Re": "Re",
-        "Mib": "Mib",
-        "Fa": "Fa",
-        "Sol": "Sol",
-        "Sib": "Sib",
-        "Do_Alto": "Do_Alto",
-        "Pausa": "Pausa",
-        "Closed": "Closed",
-        "Open": "Open",
-        "PausaMelody": "Rest",
-        "i": "Cm",
-        "III": "Eb",
-        "iv": "Fm",
-        "v": "Gm",
-        "VI": "Ab",
-        "VII": "Bb"
-      },
-      "C Major": {
-        "Do": "Do",
-        "Re": "Re",
-        "Mib": "Mi",
-        "Fa": "Fa",
-        "Sol": "Sol",
-        "Sib": "La",
-        "Do_Alto": "Ti",
-        "Pausa": "Pausa",
-        "Closed": "Closed",
-        "Open": "Open",
-        "PausaMelody": "Rest",
-        "i": "C",
-        "III": "Em",
-        "iv": "F",
-        "v": "G",
-        "VI": "Am",
-        "VII": "Bdim"
-      }
-    };
-
-    let selectedOrder = 2;
-    let isRunning = false;
-    let intervalId = null;
-
-    const mainMessage = document.getElementById("mainMessage");
-    const outputMessage = document.getElementById("outputMessage");
-    const bpmInput = document.getElementById("bpm");
-    const noteLimitInput = document.getElementById("noteLimit");
-    const genreSelect = document.getElementById("genre");
-    const scaleSelect = document.getElementById("scale");
-
-    const rootStyles = getComputedStyle(document.documentElement);
-
-    const instrumentButtons = {
-      melody: document.querySelector('[data-inst="melody"]'),
-      bass: document.querySelector('[data-inst="bass"]'),
-      drums: document.querySelector('[data-inst="drums"]'),
-      chords: document.querySelector('[data-inst="chords"]')
-    };
-
-    const graphs = {
-      melody: {
-        id: "graph-melody",
-        cardId: "card-melody",
-        current: DEFAULT_STATE.melody,
-        color: rootStyles.getPropertyValue("--melody").trim(),
-        positions: {},
-        walker: null,
-        history: [DEFAULT_STATE.melody]
-      },
-      bass: {
-        id: "graph-bass",
-        cardId: "card-bass",
-        current: DEFAULT_STATE.bass,
-        color: rootStyles.getPropertyValue("--bass").trim(),
-        positions: {},
-        walker: null,
-        history: [DEFAULT_STATE.bass]
-      },
-      drums: {
-        id: "graph-drums",
-        cardId: "card-drums",
-        current: DEFAULT_STATE.drums,
-        color: rootStyles.getPropertyValue("--drums").trim(),
-        positions: {},
-        walker: null,
-        history: [DEFAULT_STATE.drums]
-      },
-      chords: {
-        id: "graph-chords",
-        cardId: "card-chords",
-        current: DEFAULT_STATE.chords,
-        color: rootStyles.getPropertyValue("--chords").trim(),
-        positions: {},
-        walker: null,
-        history: [DEFAULT_STATE.chords]
-      }
-    };
-
-    function showMessage(element, text, type = "success") {
-      element.className = `message ${type}`;
-      element.textContent = text;
-
-      setTimeout(() => {
-        element.className = "message";
-        element.textContent = "";
-      }, 2400);
-    }
-
-    function getCurrentGenre() {
-      return genreSelect.value;
-    }
-
-    function getCurrentScale() {
-      return scaleSelect.value;
-    }
-
-    function getBase(type) {
-      return baseChainsByGenre[getCurrentGenre()][type];
-    }
-
-    function getLabel(nodeKey) {
-      const scale = scaleMaps[getCurrentScale()];
-      return (scale[nodeKey] || nodeKey).replace("_", "\n");
-    }
-
-    function isInstrumentActive(type) {
-      return instrumentButtons[type]?.classList.contains("active");
-    }
-
-    function updateHistory(type) {
-      const displayHistory = graphs[type].history.map(getLabel).join(" → ");
-      document.getElementById(HISTORY_ELEMENT_IDS[type]).textContent = displayHistory;
-    }
-
-    function updateAllHistories() {
-      INSTRUMENT_TYPES.forEach(updateHistory);
-    }
-
-    function setDefaultCurrents() {
-      INSTRUMENT_TYPES.forEach(type => {
-        graphs[type].current = DEFAULT_STATE[type];
-      });
-    }
-
-    function resetHistoriesFromCurrent() {
-      INSTRUMENT_TYPES.forEach(type => {
-        graphs[type].history = [graphs[type].current];
-      });
-      updateAllHistories();
-    }
-
-    function resetWorkspace() {
-      stopPlayback(false);
-      setDefaultCurrents();
-      redrawGraphs();
-      resetHistoriesFromCurrent();
-    }
-
-    function trimHistoriesToLimit() {
-      const limit = getHistoryLimit();
-
-      INSTRUMENT_TYPES.forEach(type => {
-        while (graphs[type].history.length > limit) {
-          graphs[type].history.shift();
-        }
-        updateHistory(type);
-      });
-    }
-
-    function buildOrderChain(baseChain, order, type) {
-      if (order === 1) {
-        return baseChain;
-      }
-
-      if (order === 2) {
-        const adjusted = {};
-        for (const key in baseChain) {
-          const values = [...baseChain[key]];
-          adjusted[key] = values.length > 1 ? [values[0], values[0], ...values] : values;
-        }
-        return adjusted;
-      }
-
-      const adjusted = {};
-      const allKeys = Object.keys(baseChain);
-
-      for (const key in baseChain) {
-        const values = [...baseChain[key]];
-        const extras = allKeys.filter(k => k !== key).slice(0, type === "drums" ? 1 : 2);
-
-        adjusted[key] = values.length > 1
-          ? [values[0], values[0], values[1], ...values, ...extras]
-          : [...values, ...extras];
-      }
-
-      return adjusted;
-    }
-
-    function applyGenreCharacter(chain, type) {
-      const genre = getCurrentGenre();
-      const adjusted = {};
-
-      for (const key in chain) {
-        adjusted[key] = [...chain[key]];
-      }
-
-      if (genre === "Ambient") {
-        for (const key in adjusted) {
-          adjusted[key].push(key);
-        }
-      }
-
-      if (genre === "House") {
-        if (type === "drums") {
-          for (const key in adjusted) {
-            adjusted[key].push("Closed");
-          }
-        }
-
-        if (type === "bass" && adjusted["Do"]) {
-          adjusted["Do"] = ["Do", "Do", "Sol", "Pausa", ...adjusted["Do"]];
-        }
-
-        if (type === "chords" && adjusted["i"]) {
-          adjusted["i"] = ["VI", "VI", ...adjusted["i"]];
-        }
-      }
-
-      if (genre === "Hip Hop") {
-        if (type === "bass" && adjusted["Pausa"]) {
-          adjusted["Pausa"] = ["Do", "Mib", "Sol", "Pausa"];
-        }
-
-        if (type === "melody") {
-          for (const key in adjusted) {
-            adjusted[key].push("PausaMelody");
-          }
-        }
-
-        if (type === "chords" && adjusted["i"]) {
-          adjusted["i"] = ["VII", "VI", ...adjusted["i"]];
-        }
-      }
-
-      if (genre === "Techno-Jazz") {
-        if (type === "melody" && adjusted["Sol"]) {
-          adjusted["Sol"] = ["Sib", "Do_Alto", "Fa", "Mib", ...adjusted["Sol"]];
-        }
-
-        if (type === "chords" && adjusted["i"]) {
-          adjusted["i"] = ["iv", "v", "VI", ...adjusted["i"]];
-        }
-      }
-
-      return adjusted;
-    }
-
-    function getOrderChain(type) {
-      const base = getBase(type);
-      const ordered = buildOrderChain(base, selectedOrder, type);
-      return applyGenreCharacter(ordered, type);
-    }
-
-    function getNodeList(type) {
-      const baseNodes = Object.keys(getBase(type));
-
-      if (
-        type === "melody" &&
-        getCurrentGenre() === "Hip Hop" &&
-        !baseNodes.includes("PausaMelody")
-      ) {
-        baseNodes.push("PausaMelody");
-      }
-
-      return baseNodes;
-    }
-
-    function createGraph(type) {
-      const graph = graphs[type];
-      const box = document.getElementById(graph.id);
-      const nodes = getNodeList(type);
-
-      if (!nodes.includes(graph.current)) {
-        graph.current = nodes[0];
-        graph.history = [graph.current];
-      }
-
-      const width = box.clientWidth || 320;
-      const height = box.clientHeight || 280;
-      const centerX = width / 2;
-      const centerY = height / 2;
-      const radius = Math.min(width, height) / 2 - 38;
-
-      box.innerHTML = "";
-      graph.positions = {};
-
-      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-      svg.setAttribute("class", "graph-svg");
-      svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
-
-      nodes.forEach((node, index) => {
-        const angle = (2 * Math.PI * index) / nodes.length - Math.PI / 2;
-        const x = centerX + radius * Math.cos(angle);
-        const y = centerY + radius * Math.sin(angle);
-        graph.positions[node] = { x, y };
-      });
-
-      const chain = getOrderChain(type);
-
-      Object.entries(chain).forEach(([source, targets]) => {
-        const from = graph.positions[source];
-        if (!from) return;
-
-        targets.forEach(target => {
-          const to = graph.positions[target];
-          if (!to) return;
-
-          const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-          line.setAttribute("x1", from.x);
-          line.setAttribute("y1", from.y);
-          line.setAttribute("x2", to.x);
-          line.setAttribute("y2", to.y);
-          line.setAttribute("stroke", "#dccdb9");
-          line.setAttribute("stroke-width", "2");
-          line.setAttribute("opacity", "0.95");
-          svg.appendChild(line);
+  const api = {
+    async post(path, body) {
+      if (!API_BASE) return null;
+      try {
+        const res = await fetch(API_BASE + path, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body)
         });
+        return await res.json();
+      } catch (e) { console.warn("[API]", path, e); return null; }
+    },
+    async get(path) {
+      if (!API_BASE) return null;
+      try {
+        const res = await fetch(API_BASE + path);
+        return await res.json();
+      } catch (e) { console.warn("[API]", path, e); return null; }
+    }
+  };
+
+  /* Ping Flask on load — shows backend status in console */
+  api.get("/health").then(r => {
+    if (r?.ok) console.info(`%c✓ Melody Matrix backend connected (v${r.version})`, "color:#2a9d8f;font-weight:bold");
+    else        console.info("%c⚡ Running in standalone (localStorage) mode", "color:#c89b63;font-weight:bold");
+  });
+
+  /* =========================================================
+     FIX: selectedOrder MUST be declared before the applySettings
+     IIFE below, otherwise assigning `selectedOrder = order`
+     inside the IIFE throws a ReferenceError and freezes the page.
+  ========================================================= */
+  let selectedOrder = 2;
+  let isRunning     = false;
+  let intervalId    = null;
+
+  /* Apply global settings — runs immediately on page load */
+  (function applySettings() {
+    const s = JSON.parse(localStorage.getItem(KEYS.SETTINGS) || "{}");
+    if (s.showFloatingNotes === false) document.getElementById("musicNotes").style.display = "none";
+
+    const genre = document.getElementById("genre");
+    const scale = document.getElementById("scale");
+    const bpm   = document.getElementById("bpm");
+    const noteLimit = document.getElementById("noteLimit");
+
+    if (s.defaultGenre) {
+      const opt = [...genre.options].find(o => o.value === s.defaultGenre);
+      if (opt) genre.value = s.defaultGenre;
+    }
+    if (s.defaultScale) {
+      const opt = [...scale.options].find(o => o.value === s.defaultScale);
+      if (opt) scale.value = s.defaultScale;
+    }
+    if (s.defaultBpm)       bpm.value = s.defaultBpm;
+    if (s.defaultNoteLimit) noteLimit.value = s.defaultNoteLimit;
+    if (s.defaultOrder) {
+      const order = Number(s.defaultOrder);
+      document.querySelectorAll(".markov-btn").forEach(b => {
+        b.classList.toggle("active", Number(b.dataset.order) === order);
       });
+      selectedOrder = order;
+    }
+  })();
 
-      box.appendChild(svg);
+  /* Show source from Generate page */
+  (function showSource() {
+    const raw = localStorage.getItem(KEYS.GEN_SOURCE);
+    if (!raw) return;
+    const src = JSON.parse(raw);
+    document.getElementById("sourceLabel").textContent = `Source: ${src.selectedLabel}`;
+    document.getElementById("sourceTime").textContent  = `Set on ${src.time}`;
+    document.getElementById("sourceBanner").style.display = "flex";
 
-      nodes.forEach(node => {
-        const pos = graph.positions[node];
-        const nodeEl = document.createElement("div");
-        nodeEl.className = "node";
-        nodeEl.style.left = `${pos.x}px`;
-        nodeEl.style.top = `${pos.y}px`;
-        nodeEl.style.background = graph.color;
-        nodeEl.textContent = getLabel(node);
-        box.appendChild(nodeEl);
+    const genreMap = { "Techno-Jazz Sample": "Techno-Jazz", "Jazz Model v2": "Techno-Jazz" };
+    const matched = genreMap[src.selectedLabel];
+    if (matched) {
+      const opt = [...document.getElementById("genre").options].find(o => o.value === matched);
+      if (opt) document.getElementById("genre").value = matched;
+    }
+  })();
+
+  /* Markov data */
+  const DEFAULT_STATE = { melody:"Do", bass:"Do", drums:"Closed", chords:"i" };
+  const INSTRUMENT_TYPES = ["melody","bass","drums","chords"];
+
+  const baseChainsByGenre = {
+    "Techno-Jazz": {
+      melody:{ "Do":["Mib","Sol","Fa"],"Re":["Do","Mib"],"Mib":["Fa","Sol","Do"],"Fa":["Mib","Sol"],"Sol":["Sib","Do_Alto","Fa"],"Sib":["Sol","Do_Alto"],"Do_Alto":["Sib","Sol"] },
+      bass:  { "Do":["Do","Do","Mib","Pausa"],"Mib":["Fa","Do"],"Fa":["Sol","Do"],"Sol":["Do","Do","Sib"],"Sib":["Sol","Do"],"Pausa":["Do","Sol"] },
+      drums: { "Closed":["Closed","Open","Pausa"],"Open":["Closed","Pausa"],"Pausa":["Closed","Open"] },
+      chords:{ "i":["iv","v","VI"],"iv":["i","v"],"v":["i","VII"],"VI":["iv","VII"],"VII":["i","v"] }
+    },
+    "Ambient": {
+      melody:{ "Do":["Fa","Sol","Mib"],"Re":["Do","Fa"],"Mib":["Do","Fa","Sol"],"Fa":["Sol","Do_Alto","Mib"],"Sol":["Fa","Do_Alto"],"Sib":["Fa","Sol"],"Do_Alto":["Sol","Fa","Mib"] },
+      bass:  { "Do":["Pausa","Mib","Do"],"Mib":["Do","Fa"],"Fa":["Pausa","Sol"],"Sol":["Do","Pausa"],"Sib":["Fa","Do"],"Pausa":["Do","Fa","Sol"] },
+      drums: { "Closed":["Pausa","Closed","Open"],"Open":["Pausa","Closed"],"Pausa":["Closed","Pausa","Open"] },
+      chords:{ "i":["VI","iv","i"],"iv":["i","VI"],"v":["i"],"VI":["i","VII"],"VII":["i","iv"] }
+    },
+    "House": {
+      melody:{ "Do":["Sol","Fa","Do_Alto"],"Re":["Fa","Sol"],"Mib":["Sol","Do"],"Fa":["Do","Sol","Do_Alto"],"Sol":["Do","Fa","Sib"],"Sib":["Do_Alto","Sol"],"Do_Alto":["Sol","Fa","Do"] },
+      bass:  { "Do":["Do","Sol","Pausa"],"Mib":["Do","Fa"],"Fa":["Sol","Do"],"Sol":["Do","Sol","Sib"],"Sib":["Do","Sol"],"Pausa":["Do","Do","Sol"] },
+      drums: { "Closed":["Closed","Closed","Open"],"Open":["Closed","Closed"],"Pausa":["Closed","Open"] },
+      chords:{ "i":["VI","III","VII"],"III":["VI","VII"],"VI":["i","III"],"VII":["i","VI"] }
+    },
+    "Hip Hop": {
+      melody:{ "Do":["Mib","Fa","Do"],"Re":["Do","Fa"],"Mib":["Do","Sol"],"Fa":["Do","Mib","PausaMelody"],"Sol":["Fa","Mib","Do"],"Sib":["Sol","Fa"],"Do_Alto":["Sol","Mib"] },
+      bass:  { "Do":["Do","Pausa","Mib"],"Mib":["Do","Pausa"],"Fa":["Sol","Do"],"Sol":["Do","Pausa","Sib"],"Sib":["Do","Sol"],"Pausa":["Do","Mib","Sol"] },
+      drums: { "Closed":["Closed","Pausa","Open"],"Open":["Closed","Pausa"],"Pausa":["Closed","Closed","Open"] },
+      chords:{ "i":["VII","VI","i"],"VI":["i","VII"],"VII":["i","VI"],"iv":["i"] }
+    }
+  };
+
+  const scaleMaps = {
+    "C Minor": { "Do":"Do","Re":"Re","Mib":"Mib","Fa":"Fa","Sol":"Sol","Sib":"Sib","Do_Alto":"Do_Alto","Pausa":"Pausa","Closed":"Closed","Open":"Open","PausaMelody":"Rest","i":"Cm","III":"Eb","iv":"Fm","v":"Gm","VI":"Ab","VII":"Bb" },
+    "C Major": { "Do":"Do","Re":"Re","Mib":"Mi","Fa":"Fa","Sol":"Sol","Sib":"La","Do_Alto":"Ti","Pausa":"Pausa","Closed":"Closed","Open":"Open","PausaMelody":"Rest","i":"C","III":"Em","iv":"F","v":"G","VI":"Am","VII":"Bdim" }
+  };
+
+  const mainMessage    = document.getElementById("mainMessage");
+  const outputMessage  = document.getElementById("outputMessage");
+  const bpmInput       = document.getElementById("bpm");
+  const noteLimitInput = document.getElementById("noteLimit");
+  const genreSelect    = document.getElementById("genre");
+  const scaleSelect    = document.getElementById("scale");
+
+  const instrumentButtons = {
+    melody: document.querySelector('[data-inst="melody"]'),
+    bass:   document.querySelector('[data-inst="bass"]'),
+    drums:  document.querySelector('[data-inst="drums"]'),
+    chords: document.querySelector('[data-inst="chords"]')
+  };
+
+  const HISTORY_IDS = { melody:"melodyHistory", bass:"bassHistory", drums:"drumHistory", chords:"chordsHistory" };
+
+  const graphs = {
+    melody:{ id:"graph-melody", current:DEFAULT_STATE.melody, color:"#5ca8e6", positions:{}, walker:null, history:[DEFAULT_STATE.melody] },
+    bass:  { id:"graph-bass",   current:DEFAULT_STATE.bass,   color:"#9b72d6", positions:{}, walker:null, history:[DEFAULT_STATE.bass]   },
+    drums: { id:"graph-drums",  current:DEFAULT_STATE.drums,  color:"#e5a84a", positions:{}, walker:null, history:[DEFAULT_STATE.drums]  },
+    chords:{ id:"graph-chords", current:DEFAULT_STATE.chords, color:"#59b38a", positions:{}, walker:null, history:[DEFAULT_STATE.chords] }
+  };
+
+  function showMessage(el, text, type="success") {
+    el.className=`message ${type}`; el.textContent=text;
+    setTimeout(()=>{ el.className="message"; el.textContent=""; }, 2800);
+  }
+
+  function getCurrentGenre() { return genreSelect.value; }
+  function getCurrentScale() { return scaleSelect.value; }
+  function getBase(type)     { return baseChainsByGenre[getCurrentGenre()][type]; }
+  function getLabel(key)     { return (scaleMaps[getCurrentScale()][key]||key).replace("_","\n"); }
+  function isActive(type)    { return instrumentButtons[type]?.classList.contains("active"); }
+  function getHistoryLimit() { return Math.max(4,Math.min(20,Number(noteLimitInput.value)||8)); }
+
+  function buildOrderChain(base,order,type) {
+    if (order===1) return base;
+    const adjusted={};
+    if (order===2) {
+      for(const key in base){ const vals=[...base[key]]; adjusted[key]=vals.length>1?[vals[0],vals[0],...vals]:vals; }
+      return adjusted;
+    }
+    const allKeys=Object.keys(base);
+    for(const key in base){ const vals=[...base[key]]; const extras=allKeys.filter(k=>k!==key).slice(0,type==="drums"?1:2); adjusted[key]=vals.length>1?[vals[0],vals[0],vals[1],...vals,...extras]:[...vals,...extras]; }
+    return adjusted;
+  }
+
+  function applyGenreCharacter(chain,type) {
+    const genre=getCurrentGenre(); const adjusted={};
+    for(const key in chain) adjusted[key]=[...chain[key]];
+    if(genre==="Ambient"){ for(const key in adjusted) adjusted[key].push(key); }
+    if(genre==="House"){
+      if(type==="drums"){ for(const key in adjusted) adjusted[key].push("Closed"); }
+      if(type==="bass" && adjusted["Do"]) adjusted["Do"]=["Do","Do","Sol","Pausa",...adjusted["Do"]];
+      if(type==="chords" && adjusted["i"]) adjusted["i"]=["VI","VI",...adjusted["i"]];
+    }
+    if(genre==="Hip Hop"){
+      if(type==="bass" && adjusted["Pausa"]) adjusted["Pausa"]=["Do","Mib","Sol","Pausa"];
+      if(type==="melody"){ for(const key in adjusted) adjusted[key].push("PausaMelody"); }
+      if(type==="chords" && adjusted["i"]) adjusted["i"]=["VII","VI",...adjusted["i"]];
+    }
+    if(genre==="Techno-Jazz"){
+      if(type==="melody" && adjusted["Sol"]) adjusted["Sol"]=["Sib","Do_Alto","Fa","Mib",...adjusted["Sol"]];
+      if(type==="chords" && adjusted["i"])   adjusted["i"]=["iv","v","VI",...adjusted["i"]];
+    }
+    return adjusted;
+  }
+
+  function getOrderChain(type) { return applyGenreCharacter(buildOrderChain(getBase(type),selectedOrder,type),type); }
+
+  function getNodeList(type) {
+    const nodes=Object.keys(getBase(type));
+    if(type==="melody" && getCurrentGenre()==="Hip Hop" && !nodes.includes("PausaMelody")) nodes.push("PausaMelody");
+    return nodes;
+  }
+
+  function createGraph(type) {
+    const graph=graphs[type]; const box=document.getElementById(graph.id);
+    const nodes=getNodeList(type); const width=box.clientWidth||320; const height=box.clientHeight||280;
+    const cx=width/2; const cy=height/2; const radius=Math.min(width,height)/2-38;
+    if(!nodes.includes(graph.current)){ graph.current=nodes[0]; graph.history=[graph.current]; }
+    box.innerHTML=""; graph.positions={};
+    const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");
+    svg.setAttribute("class","graph-svg"); svg.setAttribute("viewBox",`0 0 ${width} ${height}`);
+    nodes.forEach((node,i)=>{
+      const angle=(2*Math.PI*i)/nodes.length-Math.PI/2;
+      graph.positions[node]={ x:cx+radius*Math.cos(angle), y:cy+radius*Math.sin(angle) };
+    });
+    const chain=getOrderChain(type);
+    Object.entries(chain).forEach(([src,targets])=>{
+      const from=graph.positions[src]; if(!from) return;
+      targets.forEach(tgt=>{
+        const to=graph.positions[tgt]; if(!to) return;
+        const line=document.createElementNS("http://www.w3.org/2000/svg","line");
+        line.setAttribute("x1",from.x); line.setAttribute("y1",from.y);
+        line.setAttribute("x2",to.x);   line.setAttribute("y2",to.y);
+        line.setAttribute("stroke","#dccdb9"); line.setAttribute("stroke-width","2"); line.setAttribute("opacity","0.95");
+        svg.appendChild(line);
       });
 
       const walker = document.createElement("div");
@@ -1342,66 +737,228 @@
       resetWorkspace();
       showMessage(mainMessage, "Workspace reset.", "success");
     });
+    box.appendChild(svg);
+    nodes.forEach(node=>{
+      const pos=graph.positions[node]; const el=document.createElement("div");
+      el.className="node"; el.style.left=`${pos.x}px`; el.style.top=`${pos.y}px`;
+      el.style.background=graph.color; el.textContent=getLabel(node); box.appendChild(el);
+    });
+    const walker=document.createElement("div"); walker.className="walker";
+    const start=graph.positions[graph.current];
+    walker.style.left=`${start.x}px`; walker.style.top=`${start.y}px`;
+    box.appendChild(walker); graph.walker=walker;
+  }
 
-    document.getElementById("saveBtn").addEventListener("click", () => {
-      showMessage(
-        mainMessage,
-        `Saved current state with ${getCurrentGenre()}, ${getCurrentScale()}, ${bpmInput.value} BPM, Order ${selectedOrder}.`,
-        "success"
-      );
+  function updateHistory(type) {
+    document.getElementById(HISTORY_IDS[type]).textContent=graphs[type].history.map(getLabel).join(" → ");
+  }
+  function updateAllHistories() { INSTRUMENT_TYPES.forEach(updateHistory); }
+
+  function stepGraph(type) {
+    const graph=graphs[type]; const chain=getOrderChain(type);
+    const options=chain[graph.current]||Object.keys(chain);
+    graph.current=options[Math.floor(Math.random()*options.length)];
+    const pos=graph.positions[graph.current];
+    if(graph.walker && pos){ graph.walker.style.left=`${pos.x}px`; graph.walker.style.top=`${pos.y}px`; }
+    graph.history.push(graph.current);
+    while(graph.history.length>getHistoryLimit()) graph.history.shift();
+    updateHistory(type);
+  }
+  function stepAll() { INSTRUMENT_TYPES.forEach(type=>{ if(isActive(type)) stepGraph(type); }); }
+
+  function getInterval() {
+    const bpm=Number(bpmInput.value)||150; const base=60000/bpm;
+    const oFact=selectedOrder===1?1.25:selectedOrder===2?1:0.75;
+    const gFact=getCurrentGenre()==="Ambient"?1.3:getCurrentGenre()==="House"?0.8:getCurrentGenre()==="Hip Hop"?1.05:0.92;
+    return Math.max(160,(base*oFact*gFact)/2);
+  }
+
+  function startPlayback() {
+    if(isRunning) return;
+    isRunning=true; clearInterval(intervalId);
+
+    if (API_BASE) {
+      intervalId = setInterval(async () => {
+        const currentStates = {};
+        INSTRUMENT_TYPES.forEach(t => { currentStates[t] = graphs[t].current; });
+        const res = await api.post("/step", {
+          genre: getCurrentGenre(),
+          scale: getCurrentScale(),
+          order: selectedOrder,
+          current: currentStates,
+          instruments: INSTRUMENT_TYPES.filter(isActive)
+        });
+        if (res?.ok) {
+          Object.entries(res.labels || {}).forEach(([type, label]) => {
+            document.getElementById(HISTORY_IDS[type]).textContent =
+              [...graphs[type].history.map(getLabel), label].slice(-getHistoryLimit()).join(" → ");
+          });
+
+          Object.entries(res.states || {}).forEach(([type, state]) => {
+            graphs[type].current = state;
+            const pos = graphs[type].positions[state];
+            if (graphs[type].walker && pos) {
+              graphs[type].walker.style.left = `${pos.x}px`;
+              graphs[type].walker.style.top  = `${pos.y}px`;
+            }
+            graphs[type].history.push(state);
+            while (graphs[type].history.length > getHistoryLimit()) graphs[type].history.shift();
+            updateHistory(type);
+          });
+        } else {
+          stepAll();
+        }
+      }, getInterval());
+    } else {
+      intervalId = setInterval(stepAll, getInterval());
+    }
+
+    showMessage(mainMessage,`▶ Playing — ${getCurrentGenre()}, ${getCurrentScale()}, Order ${selectedOrder}`);
+  }
+
+  function stopPlayback(notify=true) {
+    isRunning=false; clearInterval(intervalId); intervalId=null;
+    if(notify) showMessage(mainMessage,"⏹ Playback stopped.");
+  }
+  function redrawGraphs() { INSTRUMENT_TYPES.forEach(createGraph); updateAllHistories(); syncSelectedCards(); }
+
+  function resetWorkspace() {
+    stopPlayback(false);
+    INSTRUMENT_TYPES.forEach(type=>{ graphs[type].current=DEFAULT_STATE[type]; graphs[type].history=[DEFAULT_STATE[type]]; });
+    redrawGraphs();
+  }
+  function syncSelectedCards() {
+    document.querySelectorAll(".graph-card").forEach(c=>c.classList.remove("selected"));
+    INSTRUMENT_TYPES.forEach(type=>{ if(isActive(type)) document.getElementById(`card-${type}`)?.classList.add("selected"); });
+  }
+
+  function saveSession() {
+    const settings    = JSON.parse(localStorage.getItem(KEYS.SETTINGS)||"{}");
+    const allSessions = JSON.parse(localStorage.getItem(KEYS.SAVED)||"[]");
+    const limit       = settings.historyLimit ?? 10;
+    const session = {
+      id:          Date.now(),
+      sessionName: settings.sessionName?.trim() || `Session ${new Date().toLocaleTimeString()}`,
+      genre:       getCurrentGenre(),
+      scale:       getCurrentScale(),
+      bpm:         bpmInput.value,
+      order:       selectedOrder,
+      melody:      document.getElementById("melodyHistory").textContent,
+      bass:        document.getElementById("bassHistory").textContent,
+      drums:       document.getElementById("drumHistory").textContent,
+      chords:      document.getElementById("chordsHistory").textContent,
+      createdAt:   new Date().toLocaleString(),
+      favorite:    false,
+      downloaded:  false
+    };
+    allSessions.unshift(session);
+    while(allSessions.length>limit) allSessions.pop();
+    localStorage.setItem(KEYS.SAVED,JSON.stringify(allSessions));
+
+    api.post("/sessions", session).then(r => {
+      if (r?.ok) console.info("[API] Session synced to backend:", r.session?.id);
     });
 
-    document.getElementById("saveSessionBtn").addEventListener("click", () => {
-      showMessage(outputMessage, "Session saved to your library.", "success");
+    return session;
+  }
+
+  function downloadMidi() {
+    const content = [
+      `Melody Matrix MIDI Export`,
+      `Generated: ${new Date().toLocaleString()}`,
+      `Genre: ${getCurrentGenre()} | Scale: ${getCurrentScale()} | BPM: ${bpmInput.value} | Order: ${selectedOrder}`,
+      ``,
+      `Melody: ${document.getElementById("melodyHistory").textContent}`,
+      `Bass:   ${document.getElementById("bassHistory").textContent}`,
+      `Drums:  ${document.getElementById("drumHistory").textContent}`,
+      `Chords: ${document.getElementById("chordsHistory").textContent}`
+    ].join("\n");
+    const blob=new Blob([content],{type:"text/plain"});
+    const url=URL.createObjectURL(blob); const a=document.createElement("a");
+    a.href=url; a.download=`melody-matrix-${Date.now()}.txt`; a.click(); URL.revokeObjectURL(url);
+    showMessage(outputMessage,"⬇ MIDI export downloaded.");
+  }
+
+  /* Event listeners */
+  document.getElementById("startBtn").addEventListener("click", startPlayback);
+  document.getElementById("stopBtn").addEventListener("click",  ()=>stopPlayback(true));
+
+  document.getElementById("resetBtn").addEventListener("click",()=>{
+    resetWorkspace(); showMessage(mainMessage,"↩ Workspace reset to default state.");
+  });
+
+  /* Save Output button — saves snapshot to library */
+  document.getElementById("saveBtn").addEventListener("click",()=>{
+    const session = saveSession();
+    showMessage(mainMessage,`💾 Snapshot saved: "${session.sessionName}" added to your library.`);
+  });
+
+  /* Save Session button in output section */
+  document.getElementById("saveSessionBtn").addEventListener("click",()=>{
+    const session = saveSession();
+    showMessage(outputMessage,`✓ Session "${session.sessionName}" saved to your library!`);
+  });
+
+  document.getElementById("downloadMidiBtn").addEventListener("click", downloadMidi);
+
+  document.getElementById("clearSessionBtn").addEventListener("click",()=>{
+    resetWorkspace(); showMessage(outputMessage,"✕ Session cleared.");
+  });
+
+  document.querySelectorAll(".markov-btn").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      document.querySelectorAll(".markov-btn").forEach(b=>b.classList.remove("active"));
+      btn.classList.add("active"); selectedOrder=Number(btn.dataset.order);
+      stopPlayback(false); redrawGraphs();
+      INSTRUMENT_TYPES.forEach(t=>{ graphs[t].history=[graphs[t].current]; });
+      updateAllHistories(); showMessage(mainMessage,`Markov Order set to ${selectedOrder}.`);
     });
 
-    document.getElementById("downloadMidiBtn").addEventListener("click", () => {
-      showMessage(outputMessage, "MIDI download prepared.", "success");
-    });
+  document.querySelectorAll(".instrument-btn").forEach(btn=>{
+    btn.addEventListener("click",()=>{ btn.classList.toggle("active"); syncSelectedCards(); });
+  });
 
-    document.getElementById("clearSessionBtn").addEventListener("click", () => {
-      resetWorkspace();
-      showMessage(outputMessage, "Generated session cleared.", "success");
-    });
-
-    document.querySelectorAll(".markov-btn").forEach(button => {
-      button.addEventListener("click", () => {
-        document.querySelectorAll(".markov-btn").forEach(btn => btn.classList.remove("active"));
-        button.classList.add("active");
-
-        selectedOrder = Number(button.dataset.order);
-        stopPlayback(false);
-        redrawGraphs();
-        resetHistoriesFromCurrent();
-
-        showMessage(mainMessage, `Markov Order changed to ${selectedOrder}.`, "success");
-      });
-    });
-
-    document.querySelectorAll(".instrument-btn").forEach(button => {
-      button.addEventListener("click", () => {
-        button.classList.toggle("active");
-        syncSelectedCards();
-      });
-    });
-
-    genreSelect.addEventListener("change", () => {
-      resetWorkspace();
-      showMessage(mainMessage, `Genre changed to ${getCurrentGenre()}. Graph behavior updated.`, "success");
-    });
-
-    scaleSelect.addEventListener("change", () => {
-      stopPlayback(false);
-      redrawGraphs();
-      showMessage(mainMessage, `Scale changed to ${getCurrentScale()}. Node labels updated.`, "success");
-    });
-
-    bpmInput.addEventListener("input", () => {
-      if (isRunning) {
-        clearInterval(intervalId);
-        intervalId = setInterval(stepAll, getIntervalByControls());
-      }
-    });
+  genreSelect.addEventListener("change",()=>{
+    resetWorkspace(); showMessage(mainMessage,`Genre switched to ${getCurrentGenre()}. Chains updated.`);
+  });
+  scaleSelect.addEventListener("change",()=>{
+    stopPlayback(false); redrawGraphs(); showMessage(mainMessage,`Scale changed to ${getCurrentScale()}.`);
+  });
+  bpmInput.addEventListener("input",()=>{
+    if(isRunning){
+      clearInterval(intervalId);
+      intervalId = API_BASE ? setInterval(async () => {
+        const currentStates = {};
+        INSTRUMENT_TYPES.forEach(t => { currentStates[t] = graphs[t].current; });
+        const res = await api.post("/step", {
+          genre: getCurrentGenre(),
+          scale: getCurrentScale(),
+          order: selectedOrder,
+          current: currentStates,
+          instruments: INSTRUMENT_TYPES.filter(isActive)
+        });
+        if (res?.ok) {
+          Object.entries(res.states || {}).forEach(([type, state]) => {
+            graphs[type].current = state;
+            const pos = graphs[type].positions[state];
+            if (graphs[type].walker && pos) {
+              graphs[type].walker.style.left = `${pos.x}px`;
+              graphs[type].walker.style.top  = `${pos.y}px`;
+            }
+            graphs[type].history.push(state);
+            while (graphs[type].history.length > getHistoryLimit()) graphs[type].history.shift();
+            updateHistory(type);
+          });
+        } else {
+          stepAll();
+        }
+      }, getInterval()) : setInterval(stepAll, getInterval());
+    }
+  });
+  noteLimitInput.addEventListener("input",()=>{
+    const limit=getHistoryLimit();
+    INSTRUMENT_TYPES.forEach(type=>{ while(graphs[type].history.length>limit) graphs[type].history.shift(); updateHistory(type); });
+  });
 
     noteLimitInput.addEventListener("input", trimHistoriesToLimit);
 
@@ -1409,5 +966,42 @@
 
     redrawGraphs();
   </script>
+
+<button id="chat-toggle" class="chat-toggle">💬</button>
+
+<div id="chat-window" class="chat-window hidden">
+  <div class="chat-header">
+    <span>Melody Matrix Assistant</span>
+    <button id="chat-close" class="chat-close">✕</button>
+  </div>
+
+  <div id="chat-messages" class="chat-messages">
+    <div class="bot-message">
+      Hi! I can help with music theory and how Melody Matrix works.
+    </div>
+  </div>
+
+  <div class="chat-suggestions">
+    <button class="chat-suggestion-btn" data-question="What does Markov order do?">Markov order</button>
+    <button class="chat-suggestion-btn" data-question="What does BPM mean?">BPM</button>
+    <button class="chat-suggestion-btn" data-question="What is a major chord?">Major chord</button>
+    <button class="chat-suggestion-btn" data-question="What does download MIDI do?">Download MIDI</button>
+  </div>
+
+  <div class="chat-input-row">
+    <input
+      id="chat-input"
+      type="text"
+      placeholder="Ask about music or the dashboard..."
+    />
+    <button id="chat-send">Send</button>
+  </div>
+</div>
+
+<script src="chatbot.js"></script>
+
+  window.addEventListener("resize", redrawGraphs);
+  redrawGraphs();
+</script>
 </body>
 </html>

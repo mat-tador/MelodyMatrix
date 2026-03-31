@@ -1,0 +1,29 @@
+Melody Matrix is a music generation web application with a dashboard for controlling generated musical output.
+
+The dashboard includes controls for genre, scale, BPM, note limit, and Markov order.
+
+Genre changes the musical style of the generated output.
+
+Scale controls the note set used during generation, such as major or minor tonal patterns.
+
+BPM controls the playback speed and overall tempo of the generated music.
+
+Note limit controls how many musical events or notes are generated.
+
+Markov order controls how much previous note history is used when predicting the next musical event. Higher order usually means more structured repetition and stronger dependence on previous patterns.
+
+Melody represents the lead musical line in the generated output.
+
+Bass represents the lower-frequency supporting line.
+
+Drums provide rhythmic and percussion patterns.
+
+Chords provide harmonic support for the melody and bass.
+
+The dashboard may include controls to start generation, stop playback, reset the state, save output, and download MIDI.
+
+Download MIDI exports the generated music into a MIDI file.
+
+Save or save session stores the current generated result for later use.
+
+Melody Matrix can be explained both as a music tool and as a system using algorithmic generation principles.
