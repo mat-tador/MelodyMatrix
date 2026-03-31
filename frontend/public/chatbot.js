@@ -12,6 +12,45 @@
     container.scrollTop = container.scrollHeight;
   }
 
+  function getValue(selectors) {
+    for (const selector of selectors) {
+      const el = document.querySelector(selector);
+      if (el) {
+        if (el.type === "checkbox") return el.checked;
+        return el.value;
+      }
+    }
+    return null;
+  }
+
+  function getDashboardState() {
+    return {
+      genre: getValue(["#genre", "select[name='genre']", ".genre-select"]),
+      scale: getValue(["#scale", "select[name='scale']", ".scale-select"]),
+      bpm: getValue(["#bpm", "input[name='bpm']", ".bpm-input"]),
+      note_limit: getValue(["#noteLimit", "#note-limit", "input[name='note_limit']"]),
+      markov_order: getValue(["#markovOrder", "#markov-order", "input[name='markov_order']"]),
+      instruments: {
+        melody: getValue(["#melody", "input[name='melody']"]),
+        bass: getValue(["#bass", "input[name='bass']"]),
+        drums: getValue(["#drums", "input[name='drums']"]),
+        chords: getValue(["#chords", "input[name='chords']"])
+      }
+    };
+  }
+
+  function downloadJsonFile(obj, filename = "melody_matrix_config.json") {
+    const blob = new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
   function initChatbot() {
     const chatToggle = document.getElementById("chat-toggle");
     const chatWindow = document.getElementById("chat-window");
@@ -61,12 +100,20 @@
           headers: {
             "Content-Type": "application/json"
           },
-          body: JSON.stringify({ message: text })
+          body: JSON.stringify({
+            message: text,
+            dashboard_state: getDashboardState()
+          })
         });
 
         const data = await response.json();
         removeTypingMessage();
         addBotMessage(data.reply || "No reply received.");
+
+        if (data.config_json) {
+          addBotMessage("A config JSON preset was generated and will download now.");
+          downloadJsonFile(data.config_json);
+        }
       } catch (error) {
         removeTypingMessage();
         addBotMessage("Could not reach the chatbot backend.");

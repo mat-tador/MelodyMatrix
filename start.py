@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 from urllib.request import urlopen
 
+
 ROOT = Path(__file__).resolve().parent
 BACKEND_DIR = ROOT / "backend"
 FRONTEND_PUBLIC_DIR = ROOT / "frontend" / "public"
@@ -34,21 +35,22 @@ def fail(message: str) -> None:
 
 
 def ensure_files() -> None:
-    required = [
+    required_paths = [
         BACKEND_DIR,
         FRONTEND_PUBLIC_DIR,
         BACKEND_FILE,
         LOGIN_FILE,
         DASHBOARD_FILE,
     ]
-    for path in required:
+
+    for path in required_paths:
         if not path.exists():
             fail(f"Missing required path: {path}")
 
     if not CONFIG_FILE.exists():
         log(
             "Warning: frontend/public/config.js was not found. "
-            "The site can open, but login/auth will not work until config.js exists."
+            "Login may not work until config.js exists."
         )
 
 
@@ -59,8 +61,8 @@ def is_port_open(port: int, host: str = "127.0.0.1") -> bool:
 
 
 def wait_for_http(url: str, timeout: int = 20) -> bool:
-    start = time.time()
-    while time.time() - start < timeout:
+    start_time = time.time()
+    while time.time() - start_time < timeout:
         try:
             with urlopen(url, timeout=2) as response:
                 if 200 <= response.status < 500:
@@ -84,8 +86,18 @@ def start_backend():
         return None
 
     log("Starting FastAPI backend...")
+
     process = subprocess.Popen(
-        ["python3", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", str(BACKEND_PORT)],
+        [
+            "python3",
+            "-m",
+            "uvicorn",
+            "main:app",
+            "--host",
+            "0.0.0.0",
+            "--port",
+            str(BACKEND_PORT),
+        ],
         cwd=BACKEND_DIR,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
@@ -104,7 +116,8 @@ def start_frontend_server():
         log(f"Frontend server already running on port {FRONTEND_PORT}")
         return None
 
-    log("Starting local web server...")
+    log("Starting local frontend server...")
+
     process = subprocess.Popen(
         ["python3", "-m", "http.server", str(FRONTEND_PORT)],
         cwd=FRONTEND_PUBLIC_DIR,
@@ -121,7 +134,7 @@ def start_frontend_server():
 
 
 def main() -> None:
-    log("Initializing project...")
+    log("Initializing Melody Matrix...")
     ensure_files()
 
     if ollama_running():
@@ -129,7 +142,7 @@ def main() -> None:
     else:
         log(
             "Ollama is not running on port 11434. "
-            "The chatbot can still open, but AI replies may fall back to non-AI answers."
+            "The chatbot will still work with fallback answers, but AI responses may not work."
         )
 
     backend_process = start_backend()
@@ -145,16 +158,22 @@ def main() -> None:
     try:
         while True:
             time.sleep(1)
+
             if backend_process and backend_process.poll() is not None:
                 fail("Backend stopped unexpectedly.")
+
             if frontend_process and frontend_process.poll() is not None:
                 fail("Frontend server stopped unexpectedly.")
+
     except KeyboardInterrupt:
         log("Shutting down...")
+
         if backend_process:
             backend_process.terminate()
+
         if frontend_process:
             frontend_process.terminate()
+
         log("Stopped")
 
 
