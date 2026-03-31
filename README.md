@@ -1,293 +1,190 @@
 CSCI 5300 Software Engineering Project
+
 # Melody Matrix 🎵
 
-**Music Generator** - A web application for generating music.
+**Music Generator** — A web application for generating music, with Supabase authentication and a FastAPI-backed chat assistant.
 
-## 📋 Overview
+## Overview
 
-Melody Matrix is a modern web application that allows users to generate music using AI. The project currently includes authentication pages (login and signup) with a beautiful, animated UI featuring floating music notes.
+Melody Matrix is a web app that combines static pages (login, signup, dashboard, generation flows) with a Python backend. Users sign in via Supabase; the dashboard and related pages talk to local APIs when served over HTTP (not `file://`).
 
-## 🎨 Features
+## Features
 
-### Current Features
-- **Login Page** (`login.html`)
-  - Email and password authentication
-  - Google OAuth login option
-  - Guest login option
-  - Beautiful animated UI with floating music notes
-  - Form validation and error handling
-  - Link to signup page for new users
+### Frontend (`frontend/public/`)
 
-- **Signup Page** (`index.html`)
-  - User registration with full name, email, and password
-  - Password confirmation validation (checks if passwords match)
-  - Google OAuth signup option
-  - Email verification support
-  - Link to login page for existing users
+- **Login** (`login.html`) — Email/password, Google OAuth, guest login, validation, link to signup.
+- **Signup** (`index.html`) — Registration, password confirmation, Google OAuth, email verification support.
+- **Dashboard** (`dashboard.html`) — Music / Markov-style controls and session UX.
+- **Generate** (`generate.html`), **saved outputs**, **settings**, **guest**, **reset-password** — Supporting flows and UI.
+- **Chatbot** — Client script (`chatbot.js`) calling the FastAPI `/api/chat` endpoint.
+- **Design** — Pastel palette, floating music notes, responsive layout, Poppins, transitions.
 
-### Design
-- Modern, clean UI with pastel color scheme
-- Animated floating music notes (♪ ♫ ♩ ♬)
-- Responsive design
-- Smooth transitions and hover effects
-- Poppins font family for a modern look
+### Backend (`backend/`)
 
-## 🔐 Security Note
+- **FastAPI** (`main.py`) — Chat API and health check; started by `start.py` on port **5001** via Uvicorn.
+- **Flask** (`app.py`, `routes.py`, `guest_routes.py`, etc.) — Additional routes and music tooling used in development; see code for entrypoints.
 
-**IMPORTANT**: This repository uses a secure configuration system. Sensitive credentials are stored in `config.js`, which is excluded from version control via `.gitignore`. Before using the application, you must create `config.js` with your own Supabase credentials. Never commit real API keys or secrets to version control.
+### Optional
 
-## 🚀 Getting Started
+- **Ollama** (local, port `11434`) — Improves chatbot answers when running; otherwise the app uses built-in fallbacks.
+
+## Security
+
+**IMPORTANT:** Put Supabase credentials only in `frontend/public/config.js`. Do not commit real keys. Use `frontend/public/config.example.js` as a template. Treat `config.js` like a secret (keep it out of Git and shared drives you do not trust).
+
+## Getting started
 
 ### Prerequisites
-- A modern web browser (Chrome, Firefox, Safari, Edge)
-- A Supabase account (free tier available at [supabase.com](https://supabase.com))
 
-### Setup Instructions
+- **Python 3** with the `python3` command available in your terminal (macOS/Linux: default; see **Windows** below).
+- A modern browser.
+- A **Supabase** project ([supabase.com](https://supabase.com)) for auth.
+- Optional: **Ollama** for richer chatbot responses.
 
-#### 1. Clone or Download the Repository
+### 1. Clone the repository
+
 ```bash
 git clone <repository-url>
-cd "Melody Matrix"
+cd MelodyMatrix
 ```
 
-#### 2. Set Up Supabase
+(Use your actual folder name if it differs.)
 
-1. **Create a Supabase Account**
-   - Go to [https://supabase.com](https://supabase.com)
-   - Sign up for a free account
+### 2. Supabase setup
 
-2. **Create a New Project**
-   - Click "New Project"
-   - Enter a project name (e.g., "melody-matrix")
-   - Set a database password (save this securely)
-   - Choose a region closest to you
-   - Click "Create new project"
+1. Create a project in the Supabase dashboard.
+2. **Settings → API** — copy the **Project URL** and **anon public** key.
 
-3. **Get Your Supabase Credentials**
-   - Once your project is created, go to **Settings** → **API**
-   - Copy your **Project URL** (looks like: `https://xxxxxxxxxxxxx.supabase.co`)
-   - Copy your **anon/public key** (starts with `eyJ...`)
+### 3. Create `config.js`
 
-#### 3. Configure Authentication
-
-**Create `config.js` file:**
-
-1. Copy the example configuration file:
-   ```bash
-   cp config.example.js config.js
-   ```
-   Or manually create a new file named `config.js`
-
-2. Open `config.js` and fill in your Supabase credentials:
-   ```javascript
-   const CONFIG = {
-       SUPABASE_URL: 'https://your-project-id.supabase.co',
-       SUPABASE_ANON_KEY: 'your-actual-anon-key-here'
-   };
-   ```
-
-3. Replace the placeholder values:
-   - `SUPABASE_URL`: Your Supabase Project URL (from Settings → API → Project URL)
-   - `SUPABASE_ANON_KEY`: Your Supabase anon/public key (from Settings → API → Project API keys → anon public)
-
-4. **Important**: 
-   - `config.js` is already in `.gitignore` and will NOT be committed to Git
-   - `config.example.js` is safe to commit (it's just a template)
-   - Never share your `config.js` file or commit it to version control
-
-#### 4. Configure Google OAuth (Optional but Recommended)
-
-To enable Google sign-in and sign-up:
-
-1. **Set Up Google Cloud Console**
-   - Go to [Google Cloud Console](https://console.cloud.google.com/)
-   - Create a new project or select an existing one
-   - Go to **APIs & Services** → **Credentials**
-   - Click **Create Credentials** → **OAuth client ID**
-   - Configure OAuth consent screen (if prompted)
-   - Application type: **Web application**
-   - Add authorized JavaScript origins: `http://localhost:8000` (or your port)
-   - Add authorized redirect URI: `https://YOUR_SUPABASE_PROJECT_ID.supabase.co/auth/v1/callback`
-   - Copy the **Client ID** and **Client secret**
-
-2. **Configure Google Provider in Supabase**
-   - In Supabase dashboard → **Authentication** → **Providers**
-   - Find **Google** and click it
-   - Enable Google: Toggle **ON**
-   - Paste your **Client ID** and **Client secret** from Google Cloud Console
-   - Click **Save**
-
-3. **Configure Redirect URLs in Supabase**
-   - Go to **Authentication** → **URL Configuration**
-   - **Site URL**: `http://localhost:8000` (or your development port)
-   - **Redirect URLs**: add the **exact pages** that Supabase redirects back to, for example:
-     - `http://localhost:8000/index.html`
-     - `http://localhost:8000/login.html`
-     - `http://localhost:8000/dashboard.html`
-
-#### 5. Configure Supabase Authentication Settings
-
-1. **Enable Email Authentication**
-   - In Supabase dashboard, go to **Authentication** → **Providers**
-   - Ensure **Email** provider is enabled
-   - Configure email templates if needed (optional)
-
-2. **Optional: Enable Anonymous Authentication (for Guest Login)**
-   - In Supabase dashboard, go to **Authentication** → **Providers**
-   - Scroll down and enable **Anonymous** provider
-   - This allows true anonymous guest login
-   - If not enabled, guest login will use local storage fallback
-
-3. **Configure Email Settings (Optional)**
-   - Go to **Authentication** → **Email Templates**
-   - Customize confirmation and password reset emails
-   - Or use Supabase's default templates
-
-#### 6. Run the Application
-
-Always run the app through a local web server (OAuth will not work from `file:///` URLs):
+From the repo root:
 
 ```bash
-# From the folder containing index.html, login.html, dashboard.html
-python -m http.server 8000
-
-# Or, with Node.js (if you have http-server installed)
-npx http-server -p 8000
+cp frontend/public/config.example.js frontend/public/config.js
 ```
 
-Then open these URLs in your browser:
-- `http://localhost:8000/index.html`      (signup page)
-- `http://localhost:8000/login.html`      (login page)
-- `http://localhost:8000/dashboard.html`  (dashboard, when implemented)
+Edit `frontend/public/config.js` and set your Supabase URL and anon key (same shape as in the example file).
 
-## 📁 Project Structure
+### 4. Python dependencies
 
-```
-Melody Matrix/
-│
-├── index.html          # Signup page
-├── login.html          # Login page (entry point)
-├── config.example.js   # Configuration template (safe to commit)
-├── config.js           # Your actual config (NOT committed - in .gitignore)
-├── .gitignore          # Git ignore rules
-└── README.md           # This file
+The launcher starts **Uvicorn** + **FastAPI**. Install packages into the same Python that runs `python3`:
+
+```bash
+python3 -m pip install -r backend/requirements.txt fastapi uvicorn requests
 ```
 
-## 🔐 Authentication Flow
+(`backend/requirements.txt` covers Flask and music-related libraries; FastAPI stack is listed explicitly because the main dev server uses it.)
 
-1. **New Users (Email/Password)**
-   - Start at `login.html`
-   - Click "Sign Up" link → Redirects to `index.html`
-   - Fill in registration form (name, email, password, confirm password)
-   - Password validation: Checks if passwords match and meet minimum length (6 characters)
-   - Account created in Supabase
-   - Email verification sent (if enabled)
-   - Redirected back to login page (user must log in separately)
+### 5. Run the application
 
-2. **New Users (Google OAuth)**
-   - Start at `index.html` (signup page), or click **Continue with Google** on `login.html` which redirects to `index.html`
-   - On `index.html`, click "Sign up with Google" button
-   - Redirected to Google OAuth consent screen
-   - After approval, account created (or an existing Google user reused) and user logged in
-   - Redirected to dashboard (when implemented)
+From the **repository root** (where `start.py` lives):
 
-3. **Existing Users (Email/Password)**
-   - Start at `login.html`
-   - Enter email and password
-   - Authenticated via Supabase
-   - Session stored in localStorage
-   - Redirected to dashboard (when implemented)
+```bash
+python3 start.py
+```
 
-4. **Existing Users (Google OAuth)**
-   - Start at `login.html`
-   - Click "Continue with Google" button → redirected to `index.html`
-   - On `index.html`, click "Sign up with Google" (used for both first‑time and returning Google users)
-   - Supabase checks if the Google account already exists:
-     - If it exists: user is authenticated and logged in
-     - If it does not exist: a new account is created and logged in
-   - Redirected to dashboard (when implemented)
+This will:
 
-5. **Guest Users**
-   - Start at `login.html`
-   - Click "Login as Guest" button
-   - Creates anonymous session (if enabled in Supabase) or local guest session
-   - Guest status stored in localStorage
-   - Redirected to dashboard (when implemented)
+- Start the FastAPI app on **http://127.0.0.1:5001**
+- Serve the static site from `frontend/public` on **http://127.0.0.1:8000**
+- Open the login page in your browser
 
-## 🌿 Branch Information
+Useful URLs:
 
-- **Current Branch**: Contains login page implementation
-- **Main Branch**: Contains signup page (`index.html`)
+- `http://127.0.0.1:8000/login.html`
+- `http://127.0.0.1:8000/index.html` (signup)
+- `http://127.0.0.1:8000/dashboard.html`
 
-## 🔧 Configuration Notes
+Stop the stack with **Ctrl+C** in the terminal.
 
-### Configuration System
-- **External Config**: All Supabase credentials are stored in `config.js` (not committed to Git)
-- **Template File**: `config.example.js` shows the required configuration structure
-- **Security**: `config.js` is in `.gitignore` to prevent accidental commits of sensitive data
+#### Manual run (two terminals)
 
-### Supabase Configuration
-- **Email Authentication**: Enabled by default
-- **Google OAuth**: Optional but recommended (requires Google Cloud Console setup)
-- **Anonymous Authentication**: Optional (for guest login)
-- **Email Verification**: Can be enabled/disabled in Supabase settings
-- **Password Requirements**: 
-  - Minimum 6 characters (enforced in code)
-  - Password and confirm password must match (validated on signup)
+```bash
+# Terminal 1 — API
+cd backend
+python3 -m uvicorn main:app --host 0.0.0.0 --port 5001
 
-### Local Storage
-The application uses browser localStorage to store:
-- User session data
-- Guest status flag
-- Authentication tokens
+# Terminal 2 — static files
+cd frontend/public
+python3 -m http.server 8000
+```
 
-## 🚧 Future Developmentt must be resolved
+Then open `http://127.0.0.1:8000/login.html`.
 
-Use the command line to resolve confli
+### Windows: `python3` and “Microsoft Store” message
 
-- [ ] Music generation functionality
+`start.py` invokes **`python3`**. If Windows shows “Python was not found… Microsoft Store”:
+
+1. **Settings → Apps → App execution aliases** — turn **off** aliases for `python.exe` / `python3.exe` that point to the Store.
+2. Install Python from [python.org](https://www.python.org/downloads/windows/) and enable **Add to PATH**.
+3. Open a **new** terminal and run `python3 --version`, then install deps with `python3 -m pip install ...` as above.
+
+Alternatively, use **WSL2 (Ubuntu)** and follow the same `python3` commands as on macOS.
+
+### Google OAuth (optional)
+
+1. **Google Cloud Console** — OAuth client (Web). Authorized JavaScript origins: `http://127.0.0.1:8000` and/or `http://localhost:8000`. Redirect URI: `https://<your-project-ref>.supabase.co/auth/v1/callback`.
+2. **Supabase → Authentication → Providers → Google** — enable and paste client ID/secret.
+3. **Supabase → Authentication → URL Configuration** — set **Site URL** and **Redirect URLs** to match how you open the app (include exact paths such as `/login.html`, `/index.html`, `/dashboard.html` if required by your Supabase settings).
+
+### Supabase auth settings
+
+- Enable **Email** under Authentication → Providers for password sign-in.
+- Optionally enable **Anonymous** for true guest sessions (otherwise guest mode may use local fallbacks).
+
+## Project structure
+
+```
+MelodyMatrix/
+├── start.py                 # Starts FastAPI (5001) + http.server for frontend/public (8000)
+├── README.md
+├── supabase/
+│   └── migrations/          # SQL migrations (e.g. helper functions)
+├── frontend/
+│   ├── public/              # Static HTML, CSS, JS, config.example.js, config.js (local only)
+│   └── src/                 # Additional frontend source (e.g. App.jsx)
+├── backend/
+│   ├── main.py              # FastAPI app (chat, health)
+│   ├── app.py               # Flask app (alternate / extended server)
+│   ├── routes.py            # Flask API and page routes
+│   ├── chatbot.py           # Chat logic / Ollama integration
+│   ├── music_generator.py   # Generation helpers
+│   ├── guest_routes.py      # Guest-related Flask blueprint
+│   ├── requirements.txt     # Python dependencies (install FastAPI stack separately as above)
+│   └── ...
+└── data/                    # Shared data / scripts (e.g. MIDI tooling)
+```
+
+## Authentication flow (summary)
+
+1. **Email/password signup** — `index.html` → Supabase sign-up → optional email verification → login on `login.html`.
+2. **Email/password login** — `login.html` → session stored in the browser (localStorage) as implemented in the pages.
+3. **Google** — OAuth via Supabase; returning users are recognized by Supabase.
+4. **Guest** — Anonymous provider or local guest fallback depending on Supabase settings.
+
+## Configuration notes
+
+- **config path:** `frontend/public/config.js` (must sit next to the HTML that loads it).
+- **Password rules:** Minimum length and confirm-password checks are enforced in the signup UI (see project code for exact rules).
+- **localStorage:** Used for session and UI state as documented in individual pages.
+
+## Troubleshooting
+
+| Issue | What to try |
+|--------|-------------|
+| **Backend failed to start** | Run `cd backend && python3 -m uvicorn main:app --port 5001` manually to see errors. Install `fastapi`, `uvicorn`, `requests` with the same `python3`. Ensure port **5001** is free. |
+| **`python3` not found (Windows)** | Disable Store app aliases; install python.org Python; or use WSL. |
+| **Auth / “configuration missing”** | Ensure `frontend/public/config.js` exists and defines the same `CONFIG` keys as `config.example.js`. |
+| **OAuth / redirect errors** | Supabase **Redirect URLs** and Google **authorized origins** must match the URL you use (`127.0.0.1` vs `localhost` are different hosts). |
+| **Chatbot weak answers** | Start [Ollama](https://ollama.com) on port 11434 or rely on built-in fallbacks. |
+
+## Future development
+
+- [ ] Extended music generation and export flows
 - [ ] User profile management
-- [ ] Password reset functionality
-- [ ] Session management improvements
+- [ ] Deeper session management
+- [ ] Hardening and tests across Flask/FastAPI boundaries
 
-## 📝 Notes
+---
 
-- **Configuration**: Must create `config.js` from `config.example.js` before use
-- **Redirect URLs**: Currently redirects to `dashboard.html` (not yet implemented)
-- **Guest Login**: Falls back to local storage if anonymous auth is not enabled in Supabase
-- **Email Verification**: Users may need to verify their email before logging in (depending on Supabase settings)
-- **Password Validation**: Signup form validates password match and minimum length before submission
-- **Google OAuth**: Requires both Google Cloud Console and Supabase configuration
-
-## 🐛 Troubleshooting
-
-### Authentication Not Working
-- **Missing Configuration**: Ensure `config.js` exists and contains valid Supabase credentials
-- **Config Error**: Check browser console for "Configuration not found" errors
-- Verify Supabase URL and anon key are correctly set in `config.js`
-- Check browser console for errors
-- Ensure Supabase project is active
-- Verify email provider is enabled in Supabase dashboard
-
-### Configuration Issues
-- **"Configuration missing" alert**: Create `config.js` by copying `config.example.js`
-- **Config not loading**: Ensure `config.js` is in the same directory as `index.html` and `login.html`
-- **Invalid credentials**: Verify your Supabase URL and anon key in Supabase Dashboard → Settings → API
-
-### Google OAuth Issues
-- **"redirect_uri_mismatch"**: Ensure Supabase callback URL is added in Google Cloud Console → Authorized redirect URIs
-- **"access_denied"**: Check OAuth consent screen is published or you're added as a test user
-- **"invalid_client"**: Verify Client ID and Client secret are correct in Supabase → Authentication → Providers → Google
-
-### Guest Login Issues
-- Enable anonymous authentication in Supabase if you want true anonymous sessions
-- Otherwise, guest login will use local storage fallback (works without Supabase)
-
-### Email Verification
-- Check spam folder for verification emails
-- Verify email templates are configured in Supabase
-- Check Supabase logs for email sending errors
-
-
-**Note**: This project is currently in development. The authentication pages are functional, but the main application (dashboard and music generation) is yet to be implemented.
-main
+*This README reflects the current layout with `frontend/public` and `start.py`. If you add new services or change ports, update the run instructions and Supabase URL settings to match.*
