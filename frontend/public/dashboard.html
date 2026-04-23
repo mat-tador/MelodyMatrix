@@ -7,6 +7,8 @@
   <link rel="stylesheet" href="chatbot.css" />
   <title>Melody Matrix — Dashboard</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+  <script src="https://unpkg.com/@tonejs/midi"></script>
   <style>
     *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins',sans-serif; }
 
@@ -639,6 +641,7 @@
     const graph=graphs[type]; const chain=getOrderChain(type);
     const options=chain[graph.current]||Object.keys(chain);
     graph.current=options[Math.floor(Math.random()*options.length)];
+    playInstrumentStep(type, graph.current);
     const pos=graph.positions[graph.current];
     if(graph.walker && pos){ graph.walker.style.left=`${pos.x}px`; graph.walker.style.top=`${pos.y}px`; }
     graph.history.push(graph.current);
@@ -654,8 +657,139 @@
     return Math.max(160,(base*oFact*gFact)/2);
   }
 
+  /* ---------------------------------------------------------
+     Lightweight browser audio engine (Web Audio API)
+  --------------------------------------------------------- */
+  let audioCtx = null;
+  let masterGain = null;
+
+  const NOTE_FREQ = {
+    "Do": 261.63,
+    "Re": 293.66,
+    "Mib": 311.13,
+    "Mi": 329.63,
+    "Fa": 349.23,
+    "Sol": 392.00,
+    "La": 440.00,
+    "Sib": 466.16,
+    "Si": 493.88,
+    "Do_Alto": 523.25
+  };
+
+  const CHORD_FREQ = {
+    "i": [261.63, 311.13, 392.00],
+    "iv": [349.23, 415.30, 523.25],
+    "v": [392.00, 466.16, 587.33],
+    "VI": [415.30, 523.25, 659.25],
+    "VII": [466.16, 587.33, 698.46]
+  };
+
+  function ensureAudioContext() {
+    if (!audioCtx) {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return null;
+      audioCtx = new Ctx();
+      masterGain = audioCtx.createGain();
+      // Keep a moderate-but-audible default level across laptops.
+      masterGain.gain.setValueAtTime(0.6, audioCtx.currentTime);
+      masterGain.connect(audioCtx.destination);
+    }
+    if (audioCtx.state === "suspended") {
+      audioCtx.resume().catch(() => {});
+    }
+    return audioCtx;
+  }
+
+  function normalizeState(state) {
+    if (!state) return "";
+    return String(state).trim();
+  }
+
+  function playOsc(freq, duration = 0.12, gain = 0.08, wave = "sine") {
+    const ctx = ensureAudioContext();
+    if (!ctx || !freq || !isFinite(freq)) return;
+
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    osc.type = wave;
+    osc.frequency.setValueAtTime(freq, now);
+
+    g.gain.setValueAtTime(0.0001, now);
+    g.gain.exponentialRampToValueAtTime(gain, now + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+    osc.connect(g);
+    g.connect(masterGain || ctx.destination);
+    osc.start(now);
+    osc.stop(now + duration + 0.02);
+  }
+
+  function playNoise(duration = 0.06, gain = 0.06) {
+    const ctx = ensureAudioContext();
+    if (!ctx) return;
+    const bufferSize = Math.max(1, Math.floor(ctx.sampleRate * duration));
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    const filter = ctx.createBiquadFilter();
+    filter.type = "highpass";
+    filter.frequency.value = 1200;
+    const g = ctx.createGain();
+    const now = ctx.currentTime;
+    g.gain.setValueAtTime(gain, now);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+    source.connect(filter);
+    filter.connect(g);
+    g.connect(masterGain || ctx.destination);
+    source.start(now);
+    source.stop(now + duration + 0.02);
+  }
+
+  function playInstrumentStep(type, state) {
+    if (!isActive(type) || !state) return;
+    const noteState = normalizeState(state);
+    if (!noteState || noteState === "Pausa" || noteState === "PausaMelody") return;
+
+    if (type === "drums") {
+      if (noteState === "Kick") playOsc(90, 0.08, 0.22, "sine");
+      else if (noteState === "Snare") playNoise(0.08, 0.13);
+      else if (noteState === "Open") playNoise(0.05, 0.09);
+      else playNoise(0.035, 0.07); // Closed or fallback hat-like tick
+      return;
+    }
+
+    if (type === "chords") {
+      const triad = CHORD_FREQ[noteState] || CHORD_FREQ["i"];
+      triad.forEach((freq, idx) => {
+        const ctx = ensureAudioContext();
+        if (!ctx) return;
+        const delay = idx * 0.006;
+        setTimeout(() => playOsc(freq, 0.24, 0.06, "triangle"), delay * 1000);
+      });
+      return;
+    }
+
+    const baseFreq = NOTE_FREQ[noteState] || NOTE_FREQ["Do"];
+    if (type === "bass") {
+      playOsc(baseFreq / 2, 0.2, 0.15, "square");
+    } else {
+      playOsc(baseFreq, 0.16, 0.13, "sawtooth");
+    }
+  }
+
   function startPlayback() {
     if(isRunning) return;
+    const ctx = ensureAudioContext();
+    if (!ctx) {
+      showMessage(mainMessage, "Audio is not supported in this browser.", "error");
+      return;
+    }
+    // Quick confirmation chirp so users know audio is armed.
+    playOsc(523.25, 0.05, 0.08, "triangle");
     isRunning=true; clearInterval(intervalId);
 
     if (API_BASE) {
@@ -677,6 +811,7 @@
 
           Object.entries(res.states || {}).forEach(([type, state]) => {
             graphs[type].current = state;
+            playInstrumentStep(type, state);
             const pos = graphs[type].positions[state];
             if (graphs[type].walker && pos) {
               graphs[type].walker.style.left = `${pos.x}px`;
@@ -744,20 +879,127 @@
   }
 
   function downloadMidi() {
-    const content = [
-      `Melody Matrix MIDI Export`,
-      `Generated: ${new Date().toLocaleString()}`,
-      `Genre: ${getCurrentGenre()} | Scale: ${getCurrentScale()} | BPM: ${bpmInput.value} | Order: ${selectedOrder}`,
-      ``,
-      `Melody: ${document.getElementById("melodyHistory").textContent}`,
-      `Bass:   ${document.getElementById("bassHistory").textContent}`,
-      `Drums:  ${document.getElementById("drumHistory").textContent}`,
-      `Chords: ${document.getElementById("chordsHistory").textContent}`
-    ].join("\n");
-    const blob=new Blob([content],{type:"text/plain"});
-    const url=URL.createObjectURL(blob); const a=document.createElement("a");
-    a.href=url; a.download=`melody-matrix-${Date.now()}.txt`; a.click(); URL.revokeObjectURL(url);
-    showMessage(outputMessage,"⬇ MIDI export downloaded.");
+    const midi = buildMidiFromCurrentState();
+    if (!midi) {
+      showMessage(outputMessage, "Could not create MIDI export on this browser.", "error");
+      return;
+    }
+    const bytes = midi.toArray();
+    const blob = new Blob([bytes], { type: "audio/midi" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `melody-matrix-${Date.now()}.mid`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showMessage(outputMessage, "⬇ MIDI file downloaded (.mid).");
+  }
+
+  const NOTE_TO_MIDI = {
+    Do: 60, Re: 62, Mib: 63, Mi: 64, Fa: 65, Sol: 67, La: 69, Sib: 70, Si: 71, Do_Alto: 72
+  };
+  const CHORD_TO_MIDI = {
+    i: [60, 63, 67],
+    III: [63, 67, 70],
+    iv: [65, 68, 72],
+    v: [67, 70, 74],
+    VI: [68, 72, 75],
+    VII: [70, 74, 77]
+  };
+  const DRUM_TO_MIDI = { Kick: 36, Snare: 38, Closed: 42, Open: 46 };
+
+  function getStepDurationSeconds() {
+    return Math.max(0.08, getInterval() / 1000);
+  }
+
+  function buildMidiFromCurrentState() {
+    if (typeof Midi === "undefined") return null;
+
+    const midi = new Midi();
+    midi.header.setTempo(Number(bpmInput.value) || 150);
+    midi.name = `Melody Matrix - ${getCurrentGenre()} ${getCurrentScale()}`;
+
+    const stepDur = getStepDurationSeconds();
+    const melodyTrack = midi.addTrack();
+    melodyTrack.name = "Melody";
+    const bassTrack = midi.addTrack();
+    bassTrack.name = "Bass";
+    const drumTrack = midi.addTrack();
+    drumTrack.name = "Drums";
+    drumTrack.channel = 9;
+    const chordTrack = midi.addTrack();
+    chordTrack.name = "Chords";
+
+    const maxLen = Math.max(...INSTRUMENT_TYPES.map(t => graphs[t].history.length));
+    for (let i = 0; i < maxLen; i++) {
+      const t = i * stepDur;
+
+      const m = graphs.melody.history[i];
+      if (m && m !== "PausaMelody" && NOTE_TO_MIDI[m] != null) {
+        melodyTrack.addNote({ midi: NOTE_TO_MIDI[m], time: t, duration: stepDur * 0.9, velocity: 0.75 });
+      }
+
+      const b = graphs.bass.history[i];
+      if (b && b !== "Pausa" && NOTE_TO_MIDI[b] != null) {
+        bassTrack.addNote({ midi: Math.max(24, NOTE_TO_MIDI[b] - 12), time: t, duration: stepDur * 0.95, velocity: 0.82 });
+      }
+
+      const d = graphs.drums.history[i];
+      if (d && d !== "Pausa" && DRUM_TO_MIDI[d] != null) {
+        drumTrack.addNote({ midi: DRUM_TO_MIDI[d], time: t, duration: Math.min(0.12, stepDur * 0.45), velocity: 0.92 });
+      }
+
+      const c = graphs.chords.history[i];
+      if (c && CHORD_TO_MIDI[c]) {
+        CHORD_TO_MIDI[c].forEach((note) => {
+          chordTrack.addNote({ midi: note, time: t, duration: stepDur * 0.95, velocity: 0.62 });
+        });
+      }
+    }
+
+    return midi;
+  }
+
+  async function playMidiFile(midiUrl) {
+    if (typeof Tone === "undefined" || typeof Midi === "undefined") {
+      showMessage(outputMessage, "Tone.js MIDI player not loaded.", "error");
+      return;
+    }
+    try {
+      const response = await fetch(midiUrl);
+      if (!response.ok) throw new Error("Could not load MIDI file");
+      const arrayBuffer = await response.arrayBuffer();
+      const midi = new Midi(arrayBuffer);
+
+      await Tone.start();
+      Tone.Transport.stop();
+      Tone.Transport.cancel();
+
+      const synth = new Tone.PolySynth(Tone.Synth).toDestination();
+      const now = Tone.now() + 0.15;
+      midi.tracks.forEach((track) => {
+        track.notes.forEach((note) => {
+          synth.triggerAttackRelease(note.name, note.duration, note.time + now, note.velocity);
+        });
+      });
+      Tone.Transport.start();
+      showMessage(outputMessage, "▶ Playing MIDI preview with Tone.js.");
+    } catch (error) {
+      console.error("Error playing MIDI:", error);
+      showMessage(outputMessage, "MIDI playback failed. Using live synth instead.", "error");
+    }
+  }
+
+  async function playCurrentStateAsMidi() {
+    const midi = buildMidiFromCurrentState();
+    if (!midi) return;
+    const blob = new Blob([midi.toArray()], { type: "audio/midi" });
+    const url = URL.createObjectURL(blob);
+    try {
+      await playMidiFile(url);
+    } finally {
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+    }
   }
 
   /* Event listeners */
@@ -781,6 +1023,9 @@
   });
 
   document.getElementById("downloadMidiBtn").addEventListener("click", downloadMidi);
+  document.getElementById("downloadMidiBtn").addEventListener("dblclick", () => {
+    playCurrentStateAsMidi();
+  });
 
   document.getElementById("clearSessionBtn").addEventListener("click",()=>{
     resetWorkspace(); showMessage(outputMessage,"✕ Session cleared.");
@@ -822,6 +1067,7 @@
         if (res?.ok) {
           Object.entries(res.states || {}).forEach(([type, state]) => {
             graphs[type].current = state;
+            playInstrumentStep(type, state);
             const pos = graphs[type].positions[state];
             if (graphs[type].walker && pos) {
               graphs[type].walker.style.left = `${pos.x}px`;
@@ -877,9 +1123,5 @@
 </div>
 
 <script src="chatbot.js"></script>
-
-  window.addEventListener("resize", redrawGraphs);
-  redrawGraphs();
-</script>
 </body>
 </html>
