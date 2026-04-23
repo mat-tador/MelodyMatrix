@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Melody Matrix Guest Dashboard</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+  <script src="https://unpkg.com/@tonejs/midi"></script>
   <style>
     *{
       margin:0;
@@ -637,7 +639,6 @@
         <div class="section-title">Menu</div>
         <nav class="nav">
           <a class="nav-item active" href="#"><div class="nav-icon">🏠</div><span>Guest Dashboard</span></a>
-          <a class="nav-item" href="#"><div class="nav-icon">🎼</div><span>Quick Jam</span></a>
           <a class="nav-item" href="#"><div class="nav-icon">🔒</div><span>Saved Outputs</span></a>
           <a class="nav-item" href="#"><div class="nav-icon">🔒</div><span>Advanced Settings</span></a>
         </nav>
@@ -671,43 +672,39 @@
       <section class="card">
         <div class="card-head">
           <h3>Generation Controls</h3>
-          <p>Guest mode supports demo/sample input, BPM, mood, and first-order playback only</p>
+          <p>Guest mode supports genre, scale, tempo, and note limit with first-order playback only</p>
         </div>
 
         <div class="notice">
-          Guest users can upload a MIDI file or choose a demo sample, adjust mood and tempo, and preview a live jam.
+          Guest users can adjust genre, scale, tempo, and note limit, then preview a live jam.
           Markov Order is fixed at 1, and save, history, and advanced controls are available only after sign in.
         </div>
 
         <div class="controls-grid">
           <div class="field">
-            <label for="midiUpload">Upload MIDI</label>
-            <input id="midiUpload" class="input" type="file" accept=".mid,.midi">
-          </div>
-
-          <div class="field">
-            <label for="demoSample">Demo Sample</label>
-            <select id="demoSample" class="select">
-              <option>Ambient Starter</option>
-              <option>Lo-Fi Chill</option>
-              <option>Dark Pulse</option>
-              <option>Happy Groove</option>
+            <label for="genre">Genre</label>
+            <select id="genre" class="select">
+              <option>Techno-Jazz</option>
+              <option>Ambient</option>
             </select>
           </div>
 
           <div class="field">
-            <label for="mood">Mood</label>
-            <select id="mood" class="select">
-              <option>Calm</option>
-              <option>Happy</option>
-              <option>Dark</option>
-              <option>Energetic</option>
+            <label for="scale">Scale</label>
+            <select id="scale" class="select">
+              <option>C Minor</option>
+              <option>C Major</option>
             </select>
           </div>
 
           <div class="field">
             <label for="bpm">Tempo (BPM)</label>
-            <input id="bpm" class="input" type="number" min="60" max="220" value="110">
+            <input id="bpm" class="input" type="number" min="80" max="160" value="110">
+          </div>
+
+          <div class="field">
+            <label for="noteLimit">Note Limit</label>
+            <input id="noteLimit" class="input" type="number" min="4" max="12" value="8">
           </div>
         </div>
 
@@ -728,8 +725,9 @@
 
         <div class="btn-row">
           <button class="btn btn-primary" id="startBtn">▶ Start</button>
-          <button class="btn btn-soft" id="stepBtn">Next Step</button>
           <button class="btn btn-soft" id="stopBtn">Stop</button>
+          <button class="btn btn-soft" id="downloadMidiBtn" type="button">⬇ Download MIDI</button>
+          <button class="btn btn-soft" id="playMidiBtn" type="button">▶ Play MIDI Preview</button>
           <button class="btn btn-disabled" id="saveBtn" type="button">Save Output</button>
           <button class="btn btn-disabled" id="historyBtn" type="button">History</button>
         </div>
@@ -923,24 +921,25 @@
       }
     };
 
-    const displayMap = {
-      "Do": "Do",
-      "Re": "Re",
-      "Mib": "Mib",
-      "Fa": "Fa",
-      "Sol": "Sol",
-      "Sib": "Sib",
-      "Do_Alto": "Do_Alto",
-      "Pausa": "Pausa",
-      "Closed": "Closed",
-      "Open": "Open",
-      "PausaMelody": "Rest",
-      "i": "Cm",
-      "III": "Eb",
-      "iv": "Fm",
-      "v": "Gm",
-      "VI": "Ab",
-      "VII": "Bb"
+    const scaleMaps = {
+      "C Minor": {
+        "Do": "Do", "Re": "Re", "Mib": "Mib", "Fa": "Fa", "Sol": "Sol",
+        "Sib": "Sib", "Do_Alto": "Do_Alto", "Pausa": "Pausa",
+        "Closed": "Closed", "Open": "Open", "PausaMelody": "Rest",
+        "i": "Cm", "III": "Eb", "iv": "Fm", "v": "Gm", "VI": "Ab", "VII": "Bb"
+      },
+      "C Major": {
+        "Do": "Do", "Re": "Re", "Mib": "Mi", "Fa": "Fa", "Sol": "Sol",
+        "Sib": "La", "Do_Alto": "Ti", "Pausa": "Pausa",
+        "Closed": "Closed", "Open": "Open", "PausaMelody": "Rest",
+        "i": "C", "III": "Em", "iv": "F", "v": "G", "VI": "Am", "VII": "Bdim"
+      }
+    };
+    const guestMoodByGenre = {
+      "Techno-Jazz": "Energetic",
+      "Ambient": "Calm",
+      "House": "Happy",
+      "Hip Hop": "Dark"
     };
 
     let isRunning = false;
@@ -949,7 +948,9 @@
 
     const mainMessage = document.getElementById('mainMessage');
     const bpmInput = document.getElementById('bpm');
-    const moodSelect = document.getElementById('mood');
+    const genreSelect = document.getElementById('genre');
+    const scaleSelect = document.getElementById('scale');
+    const noteLimitInput = document.getElementById('noteLimit');
 
     const graphs = {
       melody: {
@@ -995,21 +996,31 @@
       }, 2400);
     }
 
-    function getCurrentMood() {
-      return moodSelect.value;
+    function getCurrentGenre() {
+      return genreSelect.value;
+    }
+
+    function getCurrentScale() {
+      return scaleSelect.value;
     }
 
     function getBase(type) {
-      return moodChains[getCurrentMood()][type];
+      const moodKey = guestMoodByGenre[getCurrentGenre()] || "Energetic";
+      return moodChains[moodKey][type];
     }
 
     function getLabel(nodeKey) {
-      return (displayMap[nodeKey] || nodeKey).replace('_', '\n');
+      const scaleMap = scaleMaps[getCurrentScale()] || scaleMaps["C Minor"];
+      return (scaleMap[nodeKey] || nodeKey).replace('_', '\n');
+    }
+
+    function getHistoryLimit() {
+      return Math.max(4, Math.min(12, Number(noteLimitInput.value) || 8));
     }
 
     function getNodeList(type) {
       const baseNodes = Object.keys(getBase(type));
-      if (type === 'melody' && getCurrentMood() === "Dark" && !baseNodes.includes("PausaMelody")) {
+      if (type === 'melody' && getCurrentGenre() === "Hip Hop" && !baseNodes.includes("PausaMelody")) {
         baseNodes.push("PausaMelody");
       }
       return baseNodes;
@@ -1105,6 +1116,7 @@
       const chain = getBase(type);
       const options = chain[graph.current] || Object.keys(chain);
       graph.current = options[Math.floor(Math.random() * options.length)];
+      playInstrumentStep(type, graph.current);
 
       const pos = graph.positions[graph.current];
       if (graph.walker && pos) {
@@ -1113,7 +1125,7 @@
       }
 
       graph.history.push(graph.current);
-      while (graph.history.length > 8) {
+      while (graph.history.length > getHistoryLimit()) {
         graph.history.shift();
       }
 
@@ -1154,13 +1166,233 @@
       return Math.max(180, (60000 / bpm) / 2);
     }
 
+    /* ---------------------------------------------------------
+       Guest audio engine + MIDI export/preview
+    --------------------------------------------------------- */
+    let audioCtx = null;
+    let masterGain = null;
+
+    const NOTE_FREQ = {
+      Do: 261.63, Re: 293.66, Mib: 311.13, Mi: 329.63, Fa: 349.23,
+      Sol: 392.0, La: 440.0, Sib: 466.16, Si: 493.88, Do_Alto: 523.25
+    };
+    const CHORD_FREQ = {
+      i: [261.63, 311.13, 392.0],
+      III: [311.13, 392.0, 466.16],
+      iv: [349.23, 415.3, 523.25],
+      v: [392.0, 466.16, 587.33],
+      VI: [415.3, 523.25, 659.25],
+      VII: [466.16, 587.33, 698.46]
+    };
+
+    const NOTE_TO_MIDI = {
+      Do: 60, Re: 62, Mib: 63, Mi: 64, Fa: 65, Sol: 67, La: 69, Sib: 70, Si: 71, Do_Alto: 72
+    };
+    const CHORD_TO_MIDI = {
+      i: [60, 63, 67],
+      III: [63, 67, 70],
+      iv: [65, 68, 72],
+      v: [67, 70, 74],
+      VI: [68, 72, 75],
+      VII: [70, 74, 77]
+    };
+    const DRUM_TO_MIDI = { Kick: 36, Snare: 38, Closed: 42, Open: 46 };
+
+    function ensureAudioContext() {
+      if (!audioCtx) {
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        if (!Ctx) return null;
+        audioCtx = new Ctx();
+        masterGain = audioCtx.createGain();
+        masterGain.gain.setValueAtTime(0.6, audioCtx.currentTime);
+        masterGain.connect(audioCtx.destination);
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume().catch(() => {});
+      }
+      return audioCtx;
+    }
+
+    function playOsc(freq, duration = 0.12, gain = 0.08, wave = 'sine') {
+      const ctx = ensureAudioContext();
+      if (!ctx || !freq || !isFinite(freq)) return;
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = wave;
+      osc.frequency.setValueAtTime(freq, now);
+      g.gain.setValueAtTime(0.0001, now);
+      g.gain.exponentialRampToValueAtTime(gain, now + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+      osc.connect(g);
+      g.connect(masterGain || ctx.destination);
+      osc.start(now);
+      osc.stop(now + duration + 0.02);
+    }
+
+    function playNoise(duration = 0.06, gain = 0.06) {
+      const ctx = ensureAudioContext();
+      if (!ctx) return;
+      const bufferSize = Math.max(1, Math.floor(ctx.sampleRate * duration));
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+      const source = ctx.createBufferSource();
+      source.buffer = buffer;
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'highpass';
+      filter.frequency.value = 1200;
+      const g = ctx.createGain();
+      const now = ctx.currentTime;
+      g.gain.setValueAtTime(gain, now);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+      source.connect(filter);
+      filter.connect(g);
+      g.connect(masterGain || ctx.destination);
+      source.start(now);
+      source.stop(now + duration + 0.02);
+    }
+
+    function playInstrumentStep(type, state) {
+      if (!state) return;
+      if (state === 'Pausa' || state === 'PausaMelody') return;
+      if (!document.querySelector(`[data-inst="${type}"]`)?.classList.contains('active')) return;
+
+      if (type === 'drums') {
+        if (state === 'Kick') playOsc(90, 0.08, 0.22, 'sine');
+        else if (state === 'Snare') playNoise(0.08, 0.13);
+        else if (state === 'Open') playNoise(0.05, 0.09);
+        else playNoise(0.035, 0.07);
+        return;
+      }
+
+      if (type === 'chords') {
+        const triad = CHORD_FREQ[state] || CHORD_FREQ.i;
+        triad.forEach((freq, idx) => {
+          setTimeout(() => playOsc(freq, 0.24, 0.06, 'triangle'), idx * 6);
+        });
+        return;
+      }
+
+      const freq = NOTE_FREQ[state] || NOTE_FREQ.Do;
+      if (type === 'bass') playOsc(freq / 2, 0.2, 0.15, 'square');
+      else playOsc(freq, 0.16, 0.13, 'sawtooth');
+    }
+
+    function getStepDurationSeconds() {
+      return Math.max(0.08, getIntervalByControls() / 1000);
+    }
+
+    function buildMidiFromGuestState() {
+      if (typeof Midi === 'undefined') return null;
+      const midi = new Midi();
+      midi.header.setTempo(Number(bpmInput.value) || 110);
+      midi.name = `Melody Matrix Guest - ${getCurrentGenre()} ${getCurrentScale()}`;
+
+      const stepDur = getStepDurationSeconds();
+      const melodyTrack = midi.addTrack(); melodyTrack.name = 'Melody';
+      const bassTrack = midi.addTrack(); bassTrack.name = 'Bass';
+      const drumTrack = midi.addTrack(); drumTrack.name = 'Drums'; drumTrack.channel = 9;
+      const chordTrack = midi.addTrack(); chordTrack.name = 'Chords';
+
+      const maxLen = Math.max(...Object.keys(graphs).map((t) => graphs[t].history.length));
+      for (let i = 0; i < maxLen; i++) {
+        const t = i * stepDur;
+
+        const m = graphs.melody.history[i];
+        if (m && m !== 'PausaMelody' && NOTE_TO_MIDI[m] != null) {
+          melodyTrack.addNote({ midi: NOTE_TO_MIDI[m], time: t, duration: stepDur * 0.9, velocity: 0.75 });
+        }
+
+        const b = graphs.bass.history[i];
+        if (b && b !== 'Pausa' && NOTE_TO_MIDI[b] != null) {
+          bassTrack.addNote({ midi: Math.max(24, NOTE_TO_MIDI[b] - 12), time: t, duration: stepDur * 0.95, velocity: 0.82 });
+        }
+
+        const d = graphs.drums.history[i];
+        if (d && d !== 'Pausa' && DRUM_TO_MIDI[d] != null) {
+          drumTrack.addNote({ midi: DRUM_TO_MIDI[d], time: t, duration: Math.min(0.12, stepDur * 0.45), velocity: 0.92 });
+        }
+
+        const c = graphs.chords.history[i];
+        if (c && CHORD_TO_MIDI[c]) {
+          CHORD_TO_MIDI[c].forEach((note) => {
+            chordTrack.addNote({ midi: note, time: t, duration: stepDur * 0.95, velocity: 0.62 });
+          });
+        }
+      }
+      return midi;
+    }
+
+    function downloadMidi() {
+      const midi = buildMidiFromGuestState();
+      if (!midi) {
+        showMessage(mainMessage, 'Could not create MIDI export on this browser.', 'error');
+        return;
+      }
+      const blob = new Blob([midi.toArray()], { type: 'audio/midi' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `melody-matrix-guest-${Date.now()}.mid`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showMessage(mainMessage, '⬇ Guest MIDI file downloaded (.mid).', 'success');
+    }
+
+    async function playMidiFile(midiUrl) {
+      if (typeof Tone === 'undefined' || typeof Midi === 'undefined') {
+        showMessage(mainMessage, 'Tone.js MIDI player not loaded.', 'error');
+        return;
+      }
+      try {
+        const response = await fetch(midiUrl);
+        if (!response.ok) throw new Error('Could not load MIDI file');
+        const arrayBuffer = await response.arrayBuffer();
+        const midi = new Midi(arrayBuffer);
+        await Tone.start();
+        Tone.Transport.stop();
+        Tone.Transport.cancel();
+        const synth = new Tone.PolySynth(Tone.Synth).toDestination();
+        const now = Tone.now() + 0.15;
+        midi.tracks.forEach((track) => {
+          track.notes.forEach((note) => {
+            synth.triggerAttackRelease(note.name, note.duration, note.time + now, note.velocity);
+          });
+        });
+        Tone.Transport.start();
+        showMessage(mainMessage, '▶ Playing guest MIDI preview with Tone.js.', 'success');
+      } catch (error) {
+        console.error('Error playing MIDI:', error);
+        showMessage(mainMessage, 'MIDI playback failed.', 'error');
+      }
+    }
+
+    async function playCurrentStateAsMidi() {
+      const midi = buildMidiFromGuestState();
+      if (!midi) return;
+      const blob = new Blob([midi.toArray()], { type: 'audio/midi' });
+      const url = URL.createObjectURL(blob);
+      try {
+        await playMidiFile(url);
+      } finally {
+        setTimeout(() => URL.revokeObjectURL(url), 5000);
+      }
+    }
+
     function startPlayback() {
       if (isRunning) return;
+      const ctx = ensureAudioContext();
+      if (!ctx) {
+        showMessage(mainMessage, 'Audio is not supported in this browser.', 'error');
+        return;
+      }
+      playOsc(523.25, 0.05, 0.08, 'triangle');
       isRunning = true;
       intervalId = setInterval(stepAll, getIntervalByControls());
       showMessage(
         mainMessage,
-        `Guest jam started in ${getCurrentMood()} mood at ${bpmInput.value} BPM with Markov Order ${selectedOrder}.`,
+        `Guest jam started — ${getCurrentGenre()}, ${getCurrentScale()}, ${bpmInput.value} BPM, Note Limit ${getHistoryLimit()}.`,
         'success'
       );
     }
@@ -1174,15 +1406,8 @@
 
     document.getElementById('startBtn').addEventListener('click', startPlayback);
     document.getElementById('stopBtn').addEventListener('click', stopPlayback);
-
-    document.getElementById('stepBtn').addEventListener('click', () => {
-      stepAll();
-      showMessage(
-        mainMessage,
-        `Advanced one step — Mood: ${getCurrentMood()}, BPM: ${bpmInput.value}, Order: ${selectedOrder}.`,
-        'success'
-      );
-    });
+    document.getElementById('downloadMidiBtn').addEventListener('click', downloadMidi);
+    document.getElementById('playMidiBtn').addEventListener('click', playCurrentStateAsMidi);
 
     document.getElementById('saveBtn').addEventListener('click', () => {
       showMessage(mainMessage, 'Save is disabled in guest mode. Please sign in to save output.', 'error');
@@ -1198,7 +1423,7 @@
       });
     });
 
-    moodSelect.addEventListener('change', () => {
+    genreSelect.addEventListener('change', () => {
       stopPlayback();
       graphs.melody.current = "Do";
       graphs.bass.current = "Do";
@@ -1206,7 +1431,13 @@
       graphs.chords.current = "i";
       redrawGraphs();
       resetHistories();
-      showMessage(mainMessage, `Mood changed to ${getCurrentMood()}. Guest graph behavior updated.`, 'success');
+      showMessage(mainMessage, `Genre changed to ${getCurrentGenre()}. Guest graph behavior updated.`, 'success');
+    });
+
+    scaleSelect.addEventListener('change', () => {
+      redrawGraphs();
+      resetHistories();
+      showMessage(mainMessage, `Scale changed to ${getCurrentScale()}.`, 'success');
     });
 
     bpmInput.addEventListener('input', () => {
@@ -1214,6 +1445,14 @@
         clearInterval(intervalId);
         intervalId = setInterval(stepAll, getIntervalByControls());
       }
+    });
+
+    noteLimitInput.addEventListener('input', () => {
+      const limit = getHistoryLimit();
+      Object.keys(graphs).forEach((type) => {
+        while (graphs[type].history.length > limit) graphs[type].history.shift();
+        updateHistory(type);
+      });
     });
 
     window.addEventListener('resize', redrawGraphs);
