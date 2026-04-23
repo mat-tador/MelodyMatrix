@@ -309,7 +309,7 @@ window.addEventListener('load', function() {
     showSuccess('Entering guest mode...');
 
     setTimeout(() => {
-      window.location.href = 'guest.html';
+      window.location.href = 'guest.html?v=' + new Date().getTime();;
     }, 800);
   });
 

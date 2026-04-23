@@ -21,6 +21,7 @@ FRONTEND_PORT = 8000
 
 BACKEND_HEALTH_URL = f"http://127.0.0.1:{BACKEND_PORT}/api/health"
 LOGIN_URL = f"http://127.0.0.1:{FRONTEND_PORT}/login.html"
+print("Serving file from:", LOGIN_FILE)
 DASHBOARD_URL = f"http://127.0.0.1:{FRONTEND_PORT}/dashboard.html"
 OLLAMA_URL = "http://127.0.0.1:11434"
 
