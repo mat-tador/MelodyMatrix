@@ -70,10 +70,27 @@ Edit `frontend/public/config.js` and set your Supabase URL and anon key (same sh
 The launcher starts **Uvicorn** + **FastAPI**. Install packages into the same Python that runs `python3`:
 
 ```bash
-python3 -m pip install -r backend/requirements.txt fastapi uvicorn requests
+python3 -m pip install -r backend/requirements.txt
 ```
 
-(`backend/requirements.txt` covers Flask and music-related libraries; FastAPI stack is listed explicitly because the main dev server uses it.)
+(`backend/requirements.txt` includes Flask/music libs plus **FastAPI**, **Uvicorn**, **requests**, and **pydantic** for the chat API.)
+
+### Docker (consistent environment)
+
+From the repo root:
+
+```bash
+docker compose up --build
+```
+
+- Frontend: `http://localhost:8000/login.html`
+- API health: `http://localhost:5001/api/health`
+
+Copy `frontend/public/config.example.js` to `frontend/public/config.js` on your machine for Supabase auth (same as non-Docker runs).
+
+### CI
+
+GitHub Actions runs on pushes and PRs to `main` / `master` (and `feature/**` branches on push): Python compile/import checks and a **Docker Compose** build + smoke test. See `.github/workflows/ci.yml`.
 
 ### 5. Run the application
 
