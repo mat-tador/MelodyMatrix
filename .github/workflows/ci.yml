@@ -14,8 +14,6 @@ jobs:
   backend-python:
     name: Backend (Python)
     runs-on: ubuntu-latest
-    # Avoid setup-python pip cache: GitHub cache backend can return "server is busy"
-    # and stall the job for many minutes. Cold pip install is reliable enough here.
     timeout-minutes: 15
     defaults:
       run:
@@ -61,3 +59,29 @@ jobs:
       - name: Stop stack
         if: always()
         run: docker compose down -v
+
+  
+  genai-tests:
+    name: GenAI Chatbot Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [backend-python]
+
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: python -m pip install --no-cache-dir -r requirements.txt
+
+      - name: Run GenAI tests
+        run: |
+          export TEST_MODE=true
+          pytest -v ../tests
