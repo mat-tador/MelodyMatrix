@@ -1,7 +1,7 @@
 import os
 os.environ["TEST_MODE"] = "true"
 
-from backend.chatbot import get_chat_result
+from chatbot import get_chat_result
 
 
 def test_ai_response():
