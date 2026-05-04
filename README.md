@@ -92,16 +92,6 @@ Copy `frontend/public/config.example.js` to `frontend/public/config.js` on your 
 
 GitHub Actions runs on pushes and PRs to `main` / `master` (and `feature/**` branches on push): Python compile/import checks and a **Docker Compose** build + smoke test. See `.github/workflows/ci.yml`.
 
-### Git commits (optional): avoid “Co-authored-by: Cursor”
-
-If your commits pick up `Co-authored-by: Cursor <cursoragent@cursor.com>`, turn that off in **Cursor Settings** (search for co-author / git attribution), **or** enable this repo’s hook once per clone:
-
-```bash
-git config core.hooksPath .githooks
-```
-
-The `commit-msg` hook in `.githooks/` strips that line before the commit is finalized.
-
 ### 5. Run the application
 
 From the **repository root** (where `start.py` lives):
