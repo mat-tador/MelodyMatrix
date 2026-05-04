@@ -1,0 +1,8 @@
+#!/bin/sh
+# Removes Cursor agent attribution from commit messages.
+# Enable once per clone: git config core.hooksPath .githooks
+MSG_FILE="$1"
+[ -n "$MSG_FILE" ] && [ -f "$MSG_FILE" ] || exit 0
+TMP="${MSG_FILE}.strip.$$"
+grep -v '^Co-authored-by: Cursor <cursoragent@cursor.com>$' "$MSG_FILE" > "$TMP" 2>/dev/null && mv -f "$TMP" "$MSG_FILE" || rm -f "$TMP"
+exit 0
