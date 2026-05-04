@@ -1,0 +1,22 @@
+name: HTML Content Check
+
+on:
+  push:
+    branches: [ frontend-testing-ci ]
+
+jobs:
+  html-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate HTML content
+        run: |
+          grep -q "Melody Matrix" frontend/public/dashboard.html
+          grep -q "Generate" frontend/public/generate.html
+          grep -q "Saved Outputs" frontend/public/saved-outputs.html
+          grep -q "Settings" frontend/public/settings.html
+
+      - name: Success message
+        run: echo "HTML validation passed"

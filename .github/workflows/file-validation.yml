@@ -1,0 +1,22 @@
+name: File Validation
+
+on:
+  push:
+    branches: [ frontend-testing-ci ]
+
+jobs:
+  validate-files:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check frontend files exist
+        run: |
+          test -f frontend/public/dashboard.html
+          test -f frontend/public/generate.html
+          test -f frontend/public/saved-outputs.html
+          test -f frontend/public/settings.html
+
+      - name: List frontend files
+        run: ls -la frontend/public
