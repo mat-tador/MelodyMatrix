@@ -5,18 +5,19 @@ on:
     branches: [ frontend-testing-ci ]
 
 jobs:
-  validate-files:
+  file-validation:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Check frontend files exist
-        run: |
-          test -f frontend/public/dashboard.html
-          test -f frontend/public/generate.html
-          test -f frontend/public/saved-outputs.html
-          test -f frontend/public/settings.html
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
 
-      - name: List frontend files
-        run: ls -la frontend/public
+      - name: Install pytest
+        run: pip install pytest
+
+      - name: Run frontend tests (file validation)
+        run: pytest tests/test_frontend_pages.py::test_dashboard_exists -v
