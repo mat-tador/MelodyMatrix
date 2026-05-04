@@ -61,7 +61,7 @@ jobs:
         run: docker compose down -v
 
   
-    genai-tests:
+  genai-tests:
     name: GenAI Chatbot Tests
     runs-on: ubuntu-latest
     timeout-minutes: 10
