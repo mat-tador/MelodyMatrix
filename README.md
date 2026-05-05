@@ -6,7 +6,7 @@ CSCI 5300 Software Engineering Project
 
 ## Overview
 
-Melody Matrix is a web app that combines static pages (login, signup, dashboard, generation flows) with a Python backend. Users sign in via Supabase; the dashboard and related pages talk to local APIs when served over HTTP (not `file://`).
+Melody Matrix is a web app that combines static pages (login, signup, dashboard, generation flows) with a Python backend. Users sign in via Supabase; the dashboard and related pages talk to local APIs when served over HTTP (not `file://`). The chat assistant can return **music configuration presets** as JSON when the user asks for configs or presets, using optional **Ollama** (model `llama3.1`) with fallbacks to a project knowledge base and rule-based music hints.
 
 ## Features
 
@@ -16,17 +16,39 @@ Melody Matrix is a web app that combines static pages (login, signup, dashboard,
 - **Signup** (`index.html`) — Registration, password confirmation, Google OAuth, email verification support.
 - **Dashboard** (`dashboard.html`) — Music / Markov-style controls and session UX.
 - **Generate** (`generate.html`), **saved outputs**, **settings**, **guest**, **reset-password** — Supporting flows and UI.
-- **Chatbot** — Client script (`chatbot.js`) calling the FastAPI `/api/chat` endpoint.
+- **Chatbot** — `chatbot.js` posts to FastAPI **`POST /api/chat`** with the user message and optional **dashboard state** (genre, scale, BPM, Markov order, instruments). Responses may include **`config_json`** for downloadable presets (see chatbot UI).
 - **Design** — Pastel palette, floating music notes, responsive layout, Poppins, transitions.
 
 ### Backend (`backend/`)
 
-- **FastAPI** (`main.py`) — Chat API and health check; started by `start.py` on port **5001** via Uvicorn.
+- **FastAPI** (`main.py`) — `GET /api/health`, **`POST /api/chat`** (see [Chat API](#chat-api)); started by `start.py` on port **5001** via Uvicorn.
+- **Chat logic** (`chatbot.py`) — Builds context from `knowledge_base.txt` (if present), dashboard state, **Ollama** (`OLLAMA_URL`, default `http://localhost:11434/api/generate`), or **`TEST_MODE`** for CI-safe stub responses; keyword/rule fallbacks when the model is unavailable.
 - **Flask** (`app.py`, `routes.py`, `guest_routes.py`, etc.) — Additional routes and music tooling used in development; see code for entrypoints.
+- **`database.py`** — Placeholder DB hook (`connect_db` returns `None` until wired up).
 
 ### Optional
 
-- **Ollama** (local, port `11434`) — Improves chatbot answers when running; otherwise the app uses built-in fallbacks.
+- **Ollama** — Default URL `http://localhost:11434/api/generate`. Override with **`OLLAMA_URL`** (Docker Compose sets `http://ollama:11434/api/generate` inside the stack). Without Ollama, chat still works using the knowledge base and built-in fallbacks.
+
+### Optional React source (`frontend/src/`)
+
+- Contains a React prototype (e.g. `App.jsx`, components) **not** served by `start.py` or the default Docker frontend (which only copies `frontend/public/` into nginx). The shipped UI is the static `public/` site.
+
+## Chat API
+
+**`POST /api/chat`** (JSON body):
+
+| Field | Type | Description |
+|--------|------|-------------|
+| `message` | string | User message (required). |
+| `dashboard_state` | object \| omitted | Optional snapshot from the dashboard (genre, scale, bpm, etc.). |
+
+**Response** (JSON):
+
+| Field | Type | Description |
+|--------|------|-------------|
+| `reply` | string | Assistant text. |
+| `config_json` | object \| null | Present when the assistant returns a **preset** (e.g. user asks for “config”, “preset”, “json”, “settings”, or “sound like”); otherwise `null`. |
 
 ## Security
 
@@ -39,7 +61,7 @@ Melody Matrix is a web app that combines static pages (login, signup, dashboard,
 - **Python 3** with the `python3` command available in your terminal (macOS/Linux: default; see **Windows** below).
 - A modern browser.
 - A **Supabase** project ([supabase.com](https://supabase.com)) for auth.
-- Optional: **Ollama** for richer chatbot responses.
+- Optional: **Ollama** for richer chat and AI-generated JSON presets (pull `llama3.1` or align `OLLAMA_MODEL` in code if you change models).
 
 ### 1. Clone the repository
 
@@ -73,9 +95,9 @@ The launcher starts **Uvicorn** + **FastAPI**. Install packages into the same Py
 python3 -m pip install -r backend/requirements.txt
 ```
 
-(`backend/requirements.txt` includes Flask/music libs plus **FastAPI**, **Uvicorn**, **requests**, and **pydantic** for the chat API.)
+`backend/requirements.txt` includes Flask/music libraries plus **FastAPI**, **Uvicorn**, **requests**, and **pydantic** for the chat API.
 
-### Docker (consistent environment)
+### Docker (consistent environment + Ollama)
 
 From the repo root:
 
@@ -83,14 +105,28 @@ From the repo root:
 docker compose up --build
 ```
 
+Services:
+
+- **backend** — FastAPI on host port **5001**; **`OLLAMA_URL`** points at the `ollama` service; **`TEST_MODE`** defaults to `false`.
+- **frontend** — nginx serving `frontend/public` on host port **8000**.
+- **ollama** — [Ollama](https://ollama.com) on host port **11434** (persistent volume `ollama_data`).
+
+URLs:
+
 - Frontend: `http://localhost:8000/login.html`
 - API health: `http://localhost:5001/api/health`
 
-Copy `frontend/public/config.example.js` to `frontend/public/config.js` on your machine for Supabase auth (same as non-Docker runs).
+Copy `frontend/public/config.example.js` to `frontend/public/config.js` on your machine for Supabase auth (same as non-Docker runs). Pull your chat model inside the Ollama container if needed (e.g. `docker exec -it melody-ollama ollama pull llama3.1`).
 
 ### CI
 
-GitHub Actions runs on pushes and PRs to `main` / `master` (and `feature/**` branches on push): Python compile/import checks and a **Docker Compose** build + smoke test. See `.github/workflows/ci.yml`.
+GitHub Actions runs on pushes and PRs to `main` / `master` (and `feature/**` on push):
+
+1. **Backend (Python)** — Python **3.12**, `compileall`, import `main:app`.
+2. **Docker Compose** — `docker compose build`, `up --wait`, smoke `GET /api/health` and `login.html`.
+3. **GenAI Chatbot Tests** — `pytest` in `tests/` with **`TEST_MODE=true`** (no live Ollama).
+
+See `.github/workflows/ci.yml`.
 
 ### 5. Run the application
 
@@ -155,19 +191,27 @@ Alternatively, use **WSL2 (Ubuntu)** and follow the same `python3` commands as o
 MelodyMatrix/
 ├── start.py                 # Starts FastAPI (5001) + http.server for frontend/public (8000)
 ├── README.md
+├── docker-compose.yml       # backend + frontend (nginx) + ollama
 ├── supabase/
 │   └── migrations/          # SQL migrations (e.g. helper functions)
+├── tests/
+│   └── test_genai_chatbot.py # Pytest: chat + config_json (TEST_MODE)
 ├── frontend/
+│   ├── Dockerfile           # nginx: copies public/ only
 │   ├── public/              # Static HTML, CSS, JS, config.example.js, config.js (local only)
-│   └── src/                 # Additional frontend source (e.g. App.jsx)
+│   └── src/                 # Optional React prototype (not default static/nginx deploy)
 ├── backend/
-│   ├── main.py              # FastAPI app (chat, health)
+│   ├── Dockerfile           # uvicorn main:app :5001, health /api/health
+│   ├── main.py              # FastAPI app (/api/health, /api/chat)
+│   ├── chatbot.py           # Ollama, knowledge_base, presets, fallbacks
+│   ├── knowledge_base.txt   # Optional project snippets for chat context
 │   ├── app.py               # Flask app (alternate / extended server)
 │   ├── routes.py            # Flask API and page routes
-│   ├── chatbot.py           # Chat logic / Ollama integration
 │   ├── music_generator.py   # Generation helpers
 │   ├── guest_routes.py      # Guest-related Flask blueprint
-│   ├── requirements.txt     # Python dependencies (install FastAPI stack separately as above)
+│   ├── midi_parser.py       # MIDI helpers
+│   ├── database.py          # DB placeholder
+│   ├── requirements.txt     # Python dependencies
 │   └── ...
 └── data/                    # Shared data / scripts (e.g. MIDI tooling)
 ```
@@ -184,16 +228,18 @@ MelodyMatrix/
 - **config path:** `frontend/public/config.js` (must sit next to the HTML that loads it).
 - **Password rules:** Minimum length and confirm-password checks are enforced in the signup UI (see project code for exact rules).
 - **localStorage:** Used for session and UI state as documented in individual pages.
+- **Environment (backend):** `OLLAMA_URL` (full generate endpoint URL), `TEST_MODE=true` for deterministic tests without calling Ollama.
 
 ## Troubleshooting
 
 | Issue | What to try |
 |--------|-------------|
-| **Backend failed to start** | Run `cd backend && python3 -m uvicorn main:app --port 5001` manually to see errors. Install `fastapi`, `uvicorn`, `requests` with the same `python3`. Ensure port **5001** is free. |
+| **Backend failed to start** | Run `cd backend && python3 -m uvicorn main:app --port 5001` manually to see errors. Install deps with the same `python3`. Ensure port **5001** is free. |
 | **`python3` not found (Windows)** | Disable Store app aliases; install python.org Python; or use WSL. |
 | **Auth / “configuration missing”** | Ensure `frontend/public/config.js` exists and defines the same `CONFIG` keys as `config.example.js`. |
 | **OAuth / redirect errors** | Supabase **Redirect URLs** and Google **authorized origins** must match the URL you use (`127.0.0.1` vs `localhost` are different hosts). |
-| **Chatbot weak answers** | Start [Ollama](https://ollama.com) on port 11434 or rely on built-in fallbacks. |
+| **Chatbot weak answers** | Start [Ollama](https://ollama.com), set **`OLLAMA_URL`** if not default, ensure model **`llama3.1`** is pulled, or rely on `knowledge_base.txt` and fallbacks. |
+| **Docker backend unhealthy** | Check backend logs; confirm Ollama container is up and **`OLLAMA_URL`** matches the compose network (`http://ollama:11434/api/generate`). |
 
 ## Future development
 
@@ -204,4 +250,4 @@ MelodyMatrix/
 
 ---
 
-*This README reflects the current layout with `frontend/public` and `start.py`. If you add new services or change ports, update the run instructions and Supabase URL settings to match.*
+*If you add new services or change ports, update the run instructions and Supabase URL settings to match.*
