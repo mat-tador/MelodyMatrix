@@ -8,6 +8,8 @@ CSCI 5300 Software Engineering Project
 
 Melody Matrix is a web app that combines static pages (login, signup, dashboard, generation flows) with a Python backend. Users sign in via Supabase; the dashboard and related pages talk to local APIs when served over HTTP (not `file://`). The chat assistant can return **music configuration presets** as JSON when the user asks for configs or presets, using optional **Ollama** (model `llama3.1`) with fallbacks to a project knowledge base and rule-based music hints.
 
+Video Demo - https://drive.google.com/file/d/1UC6yQ6RhJThS1UNGqw-A056HHHUOD5sB/view?usp=sharing 
+
 ## Features
 
 ### Frontend (`frontend/public/`)
